@@ -1,0 +1,61 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import ProductForm from "@/components/admin/ProductForm";
+
+export default function EditProductPage() {
+  const params = useParams();
+  const id = params.id as string;
+
+  const { data: product, isLoading } = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${id}`);
+      if (!res.ok) throw new Error("Product not found");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div className="text-center py-12 text-muted">Product not found</div>;
+  }
+
+  const initialData = {
+    name: product.name,
+    slug: product.slug,
+    description: product.description || "",
+    shortDescription: product.shortDescription || "",
+    brandId: product.brandId,
+    categoryId: product.categoryId,
+    basePrice: product.basePrice,
+    salePrice: product.salePrice || "",
+    fabric: product.fabric || "",
+    occasion: product.occasion || "",
+    isFeatured: product.isFeatured,
+    isNewArrival: product.isNewArrival,
+    isBestSeller: product.isBestSeller,
+    isActive: product.isActive,
+    stockQuantity: product.stockQuantity,
+    sku: product.sku,
+    metaTitle: product.metaTitle || "",
+    metaDescription: product.metaDescription || "",
+    images: product.images || [],
+    variants: product.variants || [],
+  };
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Edit Product</h1>
+      <ProductForm initialData={initialData} productId={parseInt(id)} />
+    </div>
+  );
+}
