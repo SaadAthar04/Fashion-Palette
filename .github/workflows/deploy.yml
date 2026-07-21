@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: vps-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY_B64: ${{ secrets.VPS_SSH_KEY_B64 }}
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          VPS_HOST="$(echo "$VPS_HOST" | tr -d '[:space:]')"
+          VPS_USER="$(echo "$VPS_USER" | tr -d '[:space:]')"
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes "$VPS_USER@$VPS_HOST" bash -s <<'REMOTE'
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            cd ~/htdocs/srv1815484.hstgr.cloud/Fashion-Palette/fashion-palette
+            echo "==> Pull latest"
+            git fetch origin main
+            git reset --hard origin/main
+            echo "==> Install deps"
+            npm ci
+            echo "==> Rebuild native modules (sharp/esbuild)"
+            npm rebuild sharp esbuild --foreground-scripts
+            echo "==> Build"
+            npm run build
+            echo "==> Restart"
+            pm2 restart fashion-palette --update-env
+            pm2 save
+            echo "==> Done"
+          REMOTE
