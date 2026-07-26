@@ -13,10 +13,19 @@ async function main() {
     console.error("Usage: npm run db:passwd -- '<newPassword>' [email]   (min 6 chars)");
     process.exit(1);
   }
+
+  const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!existing) {
+    const all = await db.select({ email: users.email, role: users.role }).from(users);
+    console.error(`⚠ No user with email "${email}". Existing users:`);
+    all.forEach((u) => console.error(`   - ${u.email}  (${u.role})`));
+    await pool.end();
+    process.exit(1);
+  }
+
   const passwordHash = await bcrypt.hash(password, 12);
-  const res = await db.update(users).set({ passwordHash }).where(eq(users.email, email));
-  const affected = (res as unknown as { affectedRows?: number }).affectedRows ?? 0;
-  console.log(affected ? `✅ Password updated for ${email}` : `⚠ No user found with email ${email}`);
+  await db.update(users).set({ passwordHash }).where(eq(users.id, existing.id));
+  console.log(`✅ Password updated for ${email}`);
   await pool.end();
   process.exit(0);
 }
