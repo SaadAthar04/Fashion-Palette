@@ -5,7 +5,7 @@ import { eq, and, desc } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProductGrid from "@/components/product/ProductGrid";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
 export const metadata: Metadata = {
   title: "New Arrivals",

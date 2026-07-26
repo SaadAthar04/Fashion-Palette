@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
 import { db } from "@/lib/db";
 import { products, brands, categories } from "@/lib/db/schema";

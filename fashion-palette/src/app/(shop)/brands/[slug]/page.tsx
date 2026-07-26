@@ -7,6 +7,8 @@ import { eq, and } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProductGrid from "@/components/product/ProductGrid";
 
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

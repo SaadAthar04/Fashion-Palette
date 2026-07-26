@@ -6,6 +6,8 @@ import { eq, and, ne, desc } from "drizzle-orm";
 import ProductDetailClient from "./ProductDetailClient";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

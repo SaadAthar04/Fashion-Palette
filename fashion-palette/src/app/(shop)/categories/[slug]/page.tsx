@@ -5,6 +5,8 @@ import { categories, brands, products } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import CategoryPageClient from "./CategoryPageClient";
 
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

@@ -7,7 +7,7 @@ import { eq, and, sql } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { getImageUrl } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
 export const metadata: Metadata = {
   title: "All Brands",
