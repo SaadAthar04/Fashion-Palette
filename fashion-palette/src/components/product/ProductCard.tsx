@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, Heart, Eye } from "lucide-react";
 import Badge from "@/components/ui/Badge";
-import { formatPrice, calculateDiscount, getImageUrl } from "@/lib/utils";
+import { formatPrice, calculateDiscount, getImageUrl, cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
 interface ProductCardProps {
@@ -16,6 +17,7 @@ export default function ProductCard({
   product,
   showQuickView = true,
 }: ProductCardProps) {
+  const [loaded, setLoaded] = useState(false);
   const hasDiscount =
     product.salePrice &&
     parseFloat(product.salePrice) < parseFloat(product.basePrice);
@@ -32,12 +34,19 @@ export default function ProductCard({
         href={`/products/${product.slug}`}
         className="block relative aspect-[3/4] overflow-hidden bg-surface"
       >
-        {/* Primary Image */}
+        {/* Skeleton shimmer until the image is fully decoded */}
+        {!loaded && <span className="absolute inset-0 shimmer" aria-hidden />}
+
+        {/* Primary Image — fades in when fully loaded (no half-render flash) */}
         <Image
           src={getImageUrl(primaryImage)}
           alt={product.name}
           fill
-          className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.03]"
+          onLoad={() => setLoaded(true)}
+          className={cn(
+            "object-cover object-top transition-all duration-700 ease-out group-hover:scale-[1.03]",
+            loaded ? "opacity-100" : "opacity-0"
+          )}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
 

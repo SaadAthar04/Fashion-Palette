@@ -43,7 +43,10 @@ export default async function HomePage() {
     if (p.brandId && !brandImg[p.brandId]) brandImg[p.brandId] = img;
   }
 
-  const enrichedCategories = allCategories.map((c) => ({ ...c, imageUrl: catImg[c.id] ?? c.imageUrl }));
+  // "Stitching" is a service (its own page), not a shoppable category grid tile.
+  const enrichedCategories = allCategories
+    .filter((c) => c.slug !== "stitching")
+    .map((c) => ({ ...c, imageUrl: catImg[c.id] ?? c.imageUrl }));
   const enrichedBrands = allBrands
     .map((b) => ({ id: b.id, name: b.name, slug: b.slug, image: brandImg[b.id] ?? null }))
     .filter((b) => b.image); // only show brands that actually have imagery

@@ -39,7 +39,7 @@ export default function StitchingService() {
           </div>
 
           <Link
-            href="/categories/stitching"
+            href="/stitching"
             className="inline-flex items-center gap-3 mt-10 text-[11px] font-semibold uppercase tracking-[0.2em] text-white bg-primary px-8 py-3.5 hover:bg-accent transition-colors duration-300"
           >
             Explore Stitching

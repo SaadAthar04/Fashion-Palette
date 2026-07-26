@@ -16,7 +16,7 @@ export const NAV_LINKS = [
   { label: "Brands", href: "/brands", hasMegaMenu: true },
   { label: "Prints", href: "/categories/prints" },
   { label: "Embroidered", href: "/categories/embroidered" },
-  { label: "Stitching", href: "/categories/stitching" },
+  { label: "Stitching", href: "/stitching" }, // service page, not a product category
 ] as const;
 
 export const FOOTER_LINKS = {

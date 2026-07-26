@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/about`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
     { url: `${SITE_URL}/contact`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
     { url: `${SITE_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
+    { url: `${SITE_URL}/stitching`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
     { url: `${SITE_URL}/shipping`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
     { url: `${SITE_URL}/returns`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
     { url: `${SITE_URL}/payment`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
@@ -31,7 +32,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .where(and(eq(products.isActive, true), eq(products.publishStatus, "published"))),
   ]);
 
-  const categoryPages = cats.map((c) => ({
+  const categoryPages = cats
+    .filter((c) => c.slug !== "stitching")
+    .map((c) => ({
     url: `${SITE_URL}/categories/${c.slug}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,
