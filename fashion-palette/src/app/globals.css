@@ -1,15 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #1a1a1a;
-  --color-accent: #b08d57;
-  --color-accent-hover: #967541;
-  --color-background: #ffffff;
-  --color-surface: #f8f7f5;
-  --color-muted: #6b7280;
-  --color-border: #e5e5e5;
-  --color-sale: #c0392b;
-  --color-success: #27ae60;
+  /* Feedback 03: Fashion Palette purple system. Pages stay white/very light;
+     purple only guides attention to CTAs, active nav, links, prices, selected filters.
+     Success/warning/error are kept separate from brand purple. */
+  --color-primary: #1b1b1f; /* main text */
+  --color-accent: #7f00ff; /* brand accent */
+  --color-accent-hover: #5c00b8; /* hover / pressed */
+  --color-background: #ffffff; /* surfaces */
+  --color-surface: #f7f2ff; /* light purple-tinted background */
+  --color-muted: #66636b; /* secondary text */
+  --color-border: #e7e2ec; /* borders */
+  --color-sale: #c0392b; /* error / sale — deliberately not purple */
+  --color-success: #27ae60; /* success — deliberately not purple */
+  --color-warning: #d97706; /* warning — deliberately not purple */
 }
 
 @theme inline {
@@ -22,6 +26,7 @@
   --color-border: var(--color-border);
   --color-sale: var(--color-sale);
   --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
   --font-sans: var(--font-montserrat);
   --animate-marquee: marquee 30s linear infinite;
   --animate-fade-in: fadeIn 0.6s ease-out both;
@@ -125,7 +130,7 @@ p {
 /* ===== SELECTION ===== */
 
 ::selection {
-  background: rgba(176, 141, 87, 0.2);
+  background: rgba(127, 0, 255, 0.16);
   color: var(--color-primary);
 }
 
@@ -140,18 +145,18 @@ p {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(176, 141, 87, 0.3);
+  background: rgba(127, 0, 255, 0.3);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(176, 141, 87, 0.5);
+  background: rgba(127, 0, 255, 0.5);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(176, 141, 87, 0.3) transparent;
+  scrollbar-color: rgba(127, 0, 255, 0.3) transparent;
 }
 
 /* ===== FORM ELEMENT RESETS ===== */
@@ -197,7 +202,7 @@ input[type="number"] {
 
 /* Shimmer loading effect */
 .shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(176, 141, 87, 0.08) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(127, 0, 255, 0.08) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
@@ -222,9 +227,10 @@ input[type="number"] {
   transform: scale(1.08);
 }
 
-/* Gold gradient text */
-.text-gold-gradient {
-  background: linear-gradient(135deg, #c9a96e 0%, #b08d57 40%, #d4b77a 60%, #b08d57 100%);
+/* Brand gradient text (kept class name for compatibility; now purple) */
+.text-gold-gradient,
+.text-brand-gradient {
+  background: linear-gradient(135deg, #9a3dff 0%, #7f00ff 45%, #5c00b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

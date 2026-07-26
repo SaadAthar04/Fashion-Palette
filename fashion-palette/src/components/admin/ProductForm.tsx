@@ -24,10 +24,18 @@ type ProductFormData = {
   salePrice: string;
   fabric: string;
   occasion: string;
+  stitchType: string;
+  workType: string;
+  pieceCount: string;
+  season: string;
+  color: string;
+  careInstructions: string;
+  sourceUrl: string;
   isFeatured: boolean;
   isNewArrival: boolean;
   isBestSeller: boolean;
   isActive: boolean;
+  publishStatus: string;
   stockQuantity: number;
   sku: string;
   metaTitle: string;
@@ -35,7 +43,8 @@ type ProductFormData = {
 };
 
 interface ProductFormProps {
-  initialData?: ProductFormData & { images?: ImageItem[]; variants?: VariantItem[] };
+  // Partial so edit-mode can pass a subset; the form merges with defaults.
+  initialData?: Partial<ProductFormData> & { images?: ImageItem[]; variants?: VariantItem[] };
   productId?: number;
 }
 
@@ -43,17 +52,27 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [form, setForm] = useState<ProductFormData>(
-    initialData || {
-      name: "", slug: "", description: "", shortDescription: "",
-      brandId: 0, categoryId: 0,
-      basePrice: "", salePrice: "",
-      fabric: "", occasion: "",
-      isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true,
-      stockQuantity: 0, sku: "",
-      metaTitle: "", metaDescription: "",
+  const defaults: ProductFormData = {
+    name: "", slug: "", description: "", shortDescription: "",
+    brandId: 0, categoryId: 0,
+    basePrice: "", salePrice: "",
+    fabric: "", occasion: "",
+    stitchType: "", workType: "", pieceCount: "",
+    season: "", color: "", careInstructions: "", sourceUrl: "",
+    isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true,
+    publishStatus: "draft",
+    stockQuantity: 0, sku: "",
+    metaTitle: "", metaDescription: "",
+  };
+  // Merge so edit-mode products missing newer fields still get safe defaults,
+  // and DB nulls become empty strings for controlled inputs.
+  const [form, setForm] = useState<ProductFormData>(() => {
+    const merged = { ...defaults, ...(initialData ?? {}) } as Record<string, unknown>;
+    for (const k of Object.keys(defaults)) {
+      if (merged[k] === null || merged[k] === undefined) merged[k] = defaults[k as keyof ProductFormData];
     }
-  );
+    return merged as unknown as ProductFormData;
+  });
 
   const [images, setImages] = useState<ImageItem[]>(initialData?.images || []);
   const [variants, setVariants] = useState<VariantItem[]>(initialData?.variants || []);
@@ -132,6 +151,10 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
         categoryId: Number(form.categoryId),
         stockQuantity: Number(form.stockQuantity),
         salePrice: form.salePrice || null,
+        // enum fields must be a valid value or null (never "")
+        stitchType: form.stitchType || null,
+        workType: form.workType || null,
+        pieceCount: form.pieceCount || null,
         images,
         variants,
       };
@@ -185,6 +208,49 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
               <Input label="Sale Price (Rs.)" id="salePrice" value={form.salePrice} onChange={(e) => updateField("salePrice", e.target.value)} placeholder="Leave empty if no sale" />
             </div>
             <Input label="Stock Quantity" id="stockQuantity" type="number" value={String(form.stockQuantity)} onChange={(e) => updateField("stockQuantity", parseInt(e.target.value) || 0)} />
+          </div>
+
+          {/* Fashion details (Feedback 09) */}
+          <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+            <h3 className="font-semibold">Fashion Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Stitch Type</label>
+                <select value={form.stitchType} onChange={(e) => updateField("stitchType", e.target.value)} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
+                  <option value="">-</option>
+                  <option value="unstitched">Unstitched</option>
+                  <option value="stitched">Stitched</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Work</label>
+                <select value={form.workType} onChange={(e) => updateField("workType", e.target.value)} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
+                  <option value="">-</option>
+                  <option value="print">Print</option>
+                  <option value="embroidered">Embroidered</option>
+                  <option value="plain">Plain</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Pieces</label>
+                <select value={form.pieceCount} onChange={(e) => updateField("pieceCount", e.target.value)} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
+                  <option value="">-</option>
+                  <option value="1-piece">1 Piece</option>
+                  <option value="2-piece">2 Piece</option>
+                  <option value="3-piece">3 Piece</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="Colour" id="color" value={form.color} onChange={(e) => updateField("color", e.target.value)} />
+              <Input label="Season" id="season" value={form.season} onChange={(e) => updateField("season", e.target.value)} placeholder="e.g. Summer 2026" />
+              <Input label="Source URL" id="sourceUrl" value={form.sourceUrl} onChange={(e) => updateField("sourceUrl", e.target.value)} placeholder="Designer page" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Care Instructions</label>
+              <textarea value={form.careInstructions} onChange={(e) => updateField("careInstructions", e.target.value)} rows={2} className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent" />
+            </div>
           </div>
 
           {/* Images */}
@@ -297,6 +363,14 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
           {/* Toggles */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-3">
             <h3 className="font-semibold">Visibility</h3>
+            {/* Feedback 22: draft products stay hidden from the storefront */}
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Publish Status</label>
+              <select value={form.publishStatus} onChange={(e) => updateField("publishStatus", e.target.value)} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
+                <option value="draft">Draft (hidden)</option>
+                <option value="published">Published (live)</option>
+              </select>
+            </div>
             {[
               { key: "isActive", label: "Active" },
               { key: "isFeatured", label: "Featured" },

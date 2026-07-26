@@ -15,7 +15,11 @@ export const metadata: Metadata = {
 
 export default async function NewArrivalsPage() {
   const newProducts = await db.query.products.findMany({
-    where: and(eq(products.isNewArrival, true), eq(products.isActive, true)),
+    where: and(
+      eq(products.isNewArrival, true),
+      eq(products.isActive, true),
+      eq(products.publishStatus, "published")
+    ),
     with: {
       brand: true,
       images: true,

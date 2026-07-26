@@ -8,6 +8,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
+import { db } from "@/lib/db";
+import { brands } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -18,21 +21,22 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Fashion Palette — Pakistan's Premier Multi-Brand Fashion Destination",
+    default: "Fashion Palette — Multi-Brand Women's Fashion",
     template: "%s | Fashion Palette",
   },
   description:
-    "Shop the latest Pakistani women's fashion from top designers. Unstitched, Ready to Wear, Luxury & Festive collections. Free delivery on orders above Rs. 5,000.",
+    "Shop women's fashion from leading Pakistani designers. Unstitched, Prints, Embroidered & Festive collections. Free delivery on orders above Rs. 10,000.",
   keywords: [
     "Pakistani fashion",
     "women's clothing",
     "unstitched suits",
-    "ready to wear",
-    "luxury fashion",
-    "Gul Ahmed",
-    "Khaadi",
+    "prints",
+    "embroidered",
     "Maria B",
-    "Sana Safinaz",
+    "Elan",
+    "Zara Shahjahan",
+    "Afrozeh",
+    "Mushq",
     "online shopping Pakistan",
   ],
   openGraph: {
@@ -51,11 +55,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://fashionpalette.pk"),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Active brands for the header mega menu (Feedback 01), alphabetical.
+  const menuBrands = await db
+    .select({ id: brands.id, name: brands.name, slug: brands.slug })
+    .from(brands)
+    .where(eq(brands.isActive, true))
+    .orderBy(brands.name);
+
   return (
     <html lang="en" className={`${montserrat.variable} h-full`}>
       <head>
@@ -65,7 +76,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col antialiased">
         <Providers>
           <TopBar />
-          <Header />
+          <Header brands={menuBrands} />
           <main className="flex-1">{children}</main>
           <Footer />
           <WhatsAppButton />

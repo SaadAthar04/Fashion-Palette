@@ -3,26 +3,9 @@
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import Drawer from "@/components/ui/Drawer";
-import FilterSidebar from "./FilterSidebar";
-import type { Brand } from "@/types";
+import FilterSidebar, { type FilterProps } from "./FilterSidebar";
 
-interface MobileFiltersProps {
-  brands: Brand[];
-  selectedBrands: string[];
-  selectedSizes: string[];
-  selectedFabrics: string[];
-  selectedOccasions: string[];
-  minPrice: string;
-  maxPrice: string;
-  onToggleBrand: (slug: string) => void;
-  onToggleSize: (size: string) => void;
-  onToggleFabric: (fabric: string) => void;
-  onToggleOccasion: (occasion: string) => void;
-  onPriceChange: (min: string, max: string) => void;
-  onClearAll: () => void;
-}
-
-export default function MobileFilters(props: MobileFiltersProps) {
+export default function MobileFilters(props: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

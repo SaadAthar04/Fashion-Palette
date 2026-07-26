@@ -3,11 +3,11 @@
 import { FREE_DELIVERY_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
+// Feedback 01: removed "Effortless 7-Day Returns & Exchanges" and
+// "100% Authentic — Guaranteed Original" (unverified claims).
 const messages = [
   `Complimentary Delivery on Orders Above ${formatPrice(FREE_DELIVERY_THRESHOLD)}`,
-  "Effortless 7-Day Returns & Exchanges",
-  "WhatsApp Concierge: 0327-6796087",
-  "100% Authentic — Guaranteed Original",
+  "WhatsApp Support: 0327-6796087",
 ];
 
 export default function TopBar() {

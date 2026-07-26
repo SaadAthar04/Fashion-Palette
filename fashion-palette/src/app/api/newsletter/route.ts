@@ -4,8 +4,13 @@ import { newsletterSubscribers } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { newsletterSchema } from "@/lib/validators";
 import { requireAdmin } from "@/lib/admin";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  // Feedback 27: rate-limit newsletter signups (spam abuse).
+  if (!rateLimit(`newsletter:${clientIp(request)}`, 10, 10 * 60 * 1000).ok) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+  }
   try {
     const body = await request.json();
     const { email } = newsletterSchema.parse(body);

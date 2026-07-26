@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { products, productImages, productVariants } from "@/lib/db/schema";
+import { products, productImages, productVariants, auditLog } from "@/lib/db/schema";
 import { eq, and, or, like, desc, asc, sql, count } from "drizzle-orm";
-import { requireAdmin } from "@/lib/admin";
+import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireCatalogueEditor();
   if (auth.error) return auth.error;
 
   try {
@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
 
     const [result] = await db.insert(products).values(productData).$returningId();
     const productId = result.id;
+
+    await db.insert(auditLog).values({
+      actorUserId: parseInt(auth.session.user.id),
+      action: "product.create",
+      entityType: "product",
+      entityId: String(productId),
+    });
 
     // Insert images if provided
     if (body.images?.length) {

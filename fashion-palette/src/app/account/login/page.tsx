@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,6 +14,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Email-verification result (Feedback 21). Read from URL without Suspense.
+    const v = new URLSearchParams(window.location.search).get("verified");
+    if (v === "1") toast.success("Email verified — you can now sign in.");
+    else if (v === "0") toast.error("That verification link is invalid or has expired.");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +74,11 @@ export default function LoginPage() {
             placeholder="Enter your password"
             required
           />
+          <div className="flex justify-end -mt-1">
+            <Link href="/account/forgot-password" className="text-[12px] text-accent hover:text-accent-hover">
+              Forgot password?
+            </Link>
+          </div>
           <Button type="submit" isLoading={isLoading} className="w-full" size="lg">
             Sign In
           </Button>

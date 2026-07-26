@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,13 +14,20 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        // Feedback 27: rate-limit login attempts per IP.
+        const headers = (req?.headers ?? {}) as Record<string, string>;
+        const ip = (headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+        if (!rateLimit(`login:${ip}`, 10, 15 * 60 * 1000).ok) {
+          throw new Error("Too many attempts. Please try again later.");
+        }
 
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email))
+          .where(eq(users.email, credentials.email.toLowerCase().trim()))
           .limit(1);
 
         if (!user) return null;

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { brands, products } from "@/lib/db/schema";
@@ -18,7 +19,12 @@ async function getBrandWithProducts(slug: string) {
   if (!brand) return null;
 
   const brandProducts = await db.query.products.findMany({
-    where: and(eq(products.brandId, brand.id), eq(products.isActive, true)),
+    // Feedback 11/22: only published, active products are public-facing.
+    where: and(
+      eq(products.brandId, brand.id),
+      eq(products.isActive, true),
+      eq(products.publishStatus, "published")
+    ),
     with: {
       brand: true,
       images: true,
@@ -66,11 +72,26 @@ export default async function BrandPage({ params }: Props) {
         </h1>
         <div className="w-10 h-[1px] bg-accent mt-3" />
         <p className="text-[13px] text-muted mt-3">
-          {data.products.length} products
+          {data.products.length} {data.products.length === 1 ? "product" : "products"}
         </p>
       </div>
 
-      <ProductGrid products={data.products as any[]} columns={4} />
+      {data.products.length > 0 ? (
+        <ProductGrid products={data.products as any[]} columns={4} />
+      ) : (
+        <div className="border border-border/60 bg-surface/50 py-16 px-6 text-center">
+          <p className="text-sm font-medium">New arrivals from {data.brand.name} are on their way.</p>
+          <p className="text-[13px] text-muted mt-2">
+            This collection is being added. Explore other designers in the meantime.
+          </p>
+          <Link
+            href="/brands"
+            className="inline-block mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent hover:text-accent-hover"
+          >
+            Browse all brands →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

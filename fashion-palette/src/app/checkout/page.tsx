@@ -23,6 +23,8 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [placed, setPlaced] = useState<{ orderNumber: string; total: string } | null>(null);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -43,6 +45,33 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  // Feedback 15: confirmation with unique order number + next steps.
+  if (placed) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 md:py-24 text-center">
+        <div className="w-14 h-14 rounded-full bg-success/10 text-success flex items-center justify-center mx-auto mb-6">
+          <Check className="w-7 h-7" />
+        </div>
+        <h1 className="text-2xl md:text-3xl font-light tracking-tight">Thank you for your order</h1>
+        <p className="text-[13px] text-muted mt-3">
+          Your order <span className="font-semibold text-primary">{placed.orderNumber}</span> has been placed.
+        </p>
+        <div className="bg-surface border border-border/60 mt-8 p-6 text-left space-y-2">
+          <div className="flex justify-between text-sm"><span className="text-muted">Order number</span><span className="font-semibold">{placed.orderNumber}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted">Total</span><span className="font-semibold">{formatPrice(parseFloat(placed.total))}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted">Payment</span><span>{formData.paymentMethod === "cod" ? "Cash on Delivery" : "Bank Transfer"}</span></div>
+        </div>
+        <p className="text-[13px] text-muted mt-6">
+          We&apos;ll send a confirmation to {formData.email}. You can track this order in your account.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 mt-8">
+          <Link href="/account/orders"><Button>View My Orders</Button></Link>
+          <Link href="/new-arrivals"><Button variant="outline">Continue Shopping</Button></Link>
+        </div>
+      </div>
+    );
   }
 
   const subtotal = getSubtotal();
@@ -84,21 +113,19 @@ export default function CheckoutPage() {
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
   const handlePlaceOrder = async () => {
+    if (isSubmitting) return; // Feedback 15: prevent double submission
+    if (!acceptTerms) {
+      toast.error("Please accept the terms and return policy to continue.");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const orderItems = items.map((item) => {
-        const price = item.product.salePrice ? parseFloat(item.product.salePrice) : parseFloat(item.product.basePrice);
-        return {
-          productId: item.productId,
-          variantId: item.variantId,
-          productName: item.product.name,
-          productImage: item.product.images?.[0]?.imageUrl || "/images/placeholder/product-1.jpg",
-          size: item.variant?.size || null,
-          color: item.variant?.color || null,
-          quantity: item.quantity,
-          unitPrice: price.toFixed(2),
-        };
-      });
+      // Server revalidates price + stock (Feedback 14) — send only identifiers.
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      }));
 
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -115,6 +142,7 @@ export default function CheckoutPage() {
             postalCode: formData.postalCode || undefined,
           },
           paymentMethod: formData.paymentMethod,
+          acceptTerms: true,
           notes: formData.notes || undefined,
           items: orderItems,
         }),
@@ -122,13 +150,19 @@ export default function CheckoutPage() {
 
       const data = await res.json();
 
+      if (res.status === 409 && Array.isArray(data.issues)) {
+        // Stock/price changed — tell the customer clearly and send them to the cart.
+        data.issues.forEach((msg: string) => toast.error(msg));
+        toast.message("Please review your cart and try again.");
+        router.push("/cart");
+        return;
+      }
       if (!res.ok) {
         throw new Error(data.error || "Failed to place order");
       }
 
       clearCart();
-      toast.success(`Order ${data.orderNumber} placed successfully!`);
-      router.push(`/account/orders?new=${data.orderNumber}`);
+      setPlaced({ orderNumber: data.orderNumber, total: data.total });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to place order. Please try again.");
     } finally {
@@ -256,9 +290,23 @@ export default function CheckoutPage() {
                   );
                 })}
               </div>
+              {/* Feedback 15: require acceptance of terms + return policy */}
+              <label className="flex items-start gap-3 cursor-pointer pt-2">
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
+                />
+                <span className="text-[13px] text-muted">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-accent hover:underline">Terms &amp; Conditions</Link> and{" "}
+                  <Link href="/returns" className="text-accent hover:underline">Return Policy</Link>.
+                </span>
+              </label>
               <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={handleBack}>Back</Button>
-                <Button onClick={handlePlaceOrder} isLoading={isSubmitting} size="lg">Place Order</Button>
+                <Button onClick={handlePlaceOrder} isLoading={isSubmitting} disabled={!acceptTerms || isSubmitting} size="lg">Place Order</Button>
               </div>
             </div>
           )}

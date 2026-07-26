@@ -3,8 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
-import { orders } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { orders, orderStatusHistory } from "@/lib/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { formatPrice, cn, getImageUrl } from "@/lib/utils";
 import { ORDER_STATUSES } from "@/lib/constants";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
@@ -16,7 +16,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const order = await db.query.orders.findFirst({
     where: eq(orders.id, parseInt(id)),
-    with: { user: true, items: true },
+    with: {
+      user: true,
+      items: true,
+      statusHistory: { with: { changedBy: true }, orderBy: [asc(orderStatusHistory.createdAt)] },
+    },
   });
 
   if (!order) notFound();
@@ -73,6 +77,31 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               )}
               <div className="flex justify-between font-bold text-base border-t border-border pt-2"><span>Total</span><span>{formatPrice(order.total)}</span></div>
             </div>
+          </div>
+
+          {/* Status timeline (Feedback 19) */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="font-semibold mb-4">Order Timeline</h2>
+            {order.statusHistory.length === 0 ? (
+              <p className="text-sm text-muted">No history recorded yet.</p>
+            ) : (
+              <ol className="relative border-l border-border ml-2 space-y-5">
+                {order.statusHistory.map((h) => {
+                  const info = ORDER_STATUSES[h.status as keyof typeof ORDER_STATUSES];
+                  return (
+                    <li key={h.id} className="ml-5">
+                      <span className="absolute -left-[6px] w-3 h-3 rounded-full bg-accent" />
+                      <p className="text-sm font-medium">{info?.label || h.status}</p>
+                      <p className="text-[12px] text-muted">
+                        {new Date(h.createdAt).toLocaleString("en-PK", { dateStyle: "medium", timeStyle: "short" })}
+                        {h.changedBy?.name ? ` · ${h.changedBy.name}` : " · system"}
+                      </p>
+                      {h.note && <p className="text-[12px] text-muted mt-0.5 italic">“{h.note}”</p>}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </div>
         </div>
 

@@ -18,9 +18,11 @@ async function getCategoryData(slug: string) {
 
   const [categoryProducts, allBrands] = await Promise.all([
     db.query.products.findMany({
+      // Feedback 11/22: only published, active products are public-facing.
       where: and(
         eq(products.categoryId, category.id),
-        eq(products.isActive, true)
+        eq(products.isActive, true),
+        eq(products.publishStatus, "published")
       ),
       with: {
         brand: true,
@@ -31,7 +33,7 @@ async function getCategoryData(slug: string) {
       .select()
       .from(brands)
       .where(eq(brands.isActive, true))
-      .orderBy(brands.sortOrder),
+      .orderBy(brands.name),
   ]);
 
   return { category, products: categoryProducts, brands: allBrands };
@@ -63,6 +65,7 @@ export default async function CategoryPage({ params }: Props) {
     <CategoryPageClient
       slug={slug}
       categoryName={data.category.name}
+      categoryIntro={data.category.description ?? undefined}
       products={data.products as any[]}
       brands={data.brands}
     />

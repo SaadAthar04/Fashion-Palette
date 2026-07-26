@@ -43,9 +43,14 @@ export default function AdminProductsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Products</h1>
-        <Link href="/admin/products/new">
-          <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/products/import">
+            <Button size="sm" variant="outline">Import CSV</Button>
+          </Link>
+          <Link href="/admin/products/new">
+            <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 max-w-sm">

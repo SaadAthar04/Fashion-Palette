@@ -26,20 +26,24 @@ export default function OrderStatusForm({
   const [status, setStatus] = useState(currentStatus);
   const [paymentStatus, setPaymentStatus] = useState(currentPaymentStatus);
   const [trackingNumber, setTrackingNumber] = useState(currentTrackingNumber);
+  const [courier, setCourier] = useState("");
+  const [note, setNote] = useState("");
   const [notes, setNotes] = useState(currentNotes);
 
   const handleUpdate = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, paymentStatus, trackingNumber, notes }),
+        body: JSON.stringify({ status, paymentStatus, trackingNumber, courier, note, notes }),
       });
 
       if (!res.ok) throw new Error("Failed to update");
 
       toast.success("Order updated");
+      setNote("");
       router.refresh();
     } catch {
       toast.error("Failed to update order");
@@ -78,18 +82,39 @@ export default function OrderStatusForm({
         </select>
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Courier</label>
+          <input
+            value={courier}
+            onChange={(e) => setCourier(e.target.value)}
+            placeholder="e.g. TCS, Leopards"
+            className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Tracking #</label>
+          <input
+            value={trackingNumber}
+            onChange={(e) => setTrackingNumber(e.target.value)}
+            placeholder="Tracking number"
+            className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent"
+          />
+        </div>
+      </div>
+
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Tracking Number</label>
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Note for this update (recorded in history)</label>
         <input
-          value={trackingNumber}
-          onChange={(e) => setTrackingNumber(e.target.value)}
-          placeholder="Enter tracking number"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="e.g. Handed to courier"
           className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent"
         />
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Notes</label>
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Internal Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

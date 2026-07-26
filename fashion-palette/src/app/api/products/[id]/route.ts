@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { products, productImages, productVariants } from "@/lib/db/schema";
+import { products, productImages, productVariants, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { requireAdmin } from "@/lib/admin";
+import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 
 export async function GET(
@@ -26,7 +26,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
+  const auth = await requireCatalogueEditor();
   if (auth.error) return auth.error;
 
   const { id } = await params;
@@ -37,6 +37,13 @@ export async function PUT(
     const data = productSchema.parse(body);
 
     await db.update(products).set(data).where(eq(products.id, productId));
+    await db.insert(auditLog).values({
+      actorUserId: parseInt(auth.session.user.id),
+      action: "product.update",
+      entityType: "product",
+      entityId: String(productId),
+      meta: { publishStatus: data.publishStatus },
+    });
 
     // Update images if provided
     if (body.images) {
@@ -91,15 +98,19 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
+  const auth = await requireCatalogueEditor();
   if (auth.error) return auth.error;
 
   const { id } = await params;
+  const productId = parseInt(id);
 
-  await db
-    .update(products)
-    .set({ isActive: false })
-    .where(eq(products.id, parseInt(id)));
+  await db.update(products).set({ isActive: false }).where(eq(products.id, productId));
+  await db.insert(auditLog).values({
+    actorUserId: parseInt(auth.session.user.id),
+    action: "product.delete",
+    entityType: "product",
+    entityId: String(productId),
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -19,7 +19,12 @@ const sizeGuide = [
 
 async function getProduct(slug: string) {
   const product = await db.query.products.findFirst({
-    where: and(eq(products.slug, slug), eq(products.isActive, true)),
+    // Feedback 22: draft products must not be publicly reachable by URL.
+    where: and(
+      eq(products.slug, slug),
+      eq(products.isActive, true),
+      eq(products.publishStatus, "published")
+    ),
     with: {
       brand: true,
       category: true,
@@ -64,6 +69,7 @@ async function getRelatedProducts(productId: number, categoryId: number) {
     where: and(
       eq(products.categoryId, categoryId),
       eq(products.isActive, true),
+      eq(products.publishStatus, "published"),
       ne(products.id, productId)
     ),
     with: {

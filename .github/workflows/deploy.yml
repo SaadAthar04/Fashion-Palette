@@ -38,6 +38,12 @@ jobs:
             npm ci
             echo "==> Rebuild native modules (sharp/esbuild)"
             npm rebuild sharp esbuild --foreground-scripts
+            echo "==> Sync database schema to the live DB (pre-launch: push --force)"
+            # Runs on the VPS where MySQL 127.0.0.1:3306 is reachable. drizzle-kit
+            # reads the app-folder .env for DB credentials. NOTE (pre-launch only):
+            # --force auto-approves data-loss statements. Switch to gated
+            # `drizzle-kit migrate` before real customer data exists (Feedback 32).
+            npx drizzle-kit push --force
             echo "==> Build"
             npm run build
             echo "==> Restart"

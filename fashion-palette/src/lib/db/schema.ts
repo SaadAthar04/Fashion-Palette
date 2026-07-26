@@ -26,6 +26,7 @@ export const brands = mysqlTable("brands", {
 
 export const brandsRelations = relations(brands, ({ many }) => ({
   products: many(products),
+  collections: many(collections),
 }));
 
 // ─── CATEGORIES ─────────────────────────────────────────
@@ -60,18 +61,45 @@ export const products = mysqlTable("products", {
   shortDescription: varchar("short_description", { length: 1000 }),
   brandId: int("brand_id").notNull(),
   categoryId: int("category_id").notNull(),
+  collectionId: int("collection_id"), // Feedback 09: collection
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
   salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
-  fabric: varchar({ length: 100 }),
+  // ── Identity / sourcing (Feedback 09 required) ──
+  sku: varchar({ length: 100 }).notNull().unique(), // local SKU
+  originalProductCode: varchar("original_product_code", { length: 120 }),
+  season: varchar({ length: 60 }),
+  sourceUrl: varchar("source_url", { length: 500 }), // designer source page
+  // ── Fashion attributes (Feedback 09) ──
+  stitchType: mysqlEnum("stitch_type", ["stitched", "unstitched"]),
+  workType: mysqlEnum("work_type", ["print", "embroidered", "plain", "mixed"]),
+  pieceCount: mysqlEnum("piece_count", ["1-piece", "2-piece", "3-piece"]),
+  fabric: varchar({ length: 100 }), // legacy/general fabric
+  shirtFabric: varchar("shirt_fabric", { length: 100 }),
+  trouserFabric: varchar("trouser_fabric", { length: 100 }),
+  dupattaFabric: varchar("dupatta_fabric", { length: 100 }),
+  color: varchar({ length: 80 }),
+  careInstructions: text("care_instructions"),
   occasion: varchar({ length: 100 }),
+  // ── Commerce (Feedback 09) ──
+  deliveryEstimate: varchar("delivery_estimate", { length: 120 }),
+  returnEligible: boolean("return_eligible").notNull().default(true),
+  taxStatus: varchar("tax_status", { length: 60 }),
+  weightGrams: int("weight_grams"),
+  shippingClass: varchar("shipping_class", { length: 60 }),
+  videoUrl: varchar("video_url", { length: 500 }),
+  // ── Merchandising flags ──
   isFeatured: boolean("is_featured").notNull().default(false),
   isNewArrival: boolean("is_new_arrival").notNull().default(false),
   isBestSeller: boolean("is_best_seller").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  // Feedback 22: draft vs published so incomplete products stay hidden
+  publishStatus: mysqlEnum("publish_status", ["draft", "published"]).notNull().default("draft"),
   stockQuantity: int("stock_quantity").notNull().default(0),
-  sku: varchar({ length: 100 }).notNull().unique(),
+  // ── SEO (Feedback 09 / 30) ──
   metaTitle: varchar("meta_title", { length: 255 }),
   metaDescription: varchar("meta_description", { length: 500 }),
+  canonicalUrl: varchar("canonical_url", { length: 500 }),
+  socialImageUrl: varchar("social_image_url", { length: 500 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
@@ -84,6 +112,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
     references: [categories.id],
+  }),
+  collection: one(collections, {
+    fields: [products.collectionId],
+    references: [collections.id],
   }),
   images: many(productImages),
   variants: many(productVariants),
@@ -120,6 +152,7 @@ export const productVariants = mysqlTable("product_variants", {
     .notNull()
     .default("0.00"),
   skuSuffix: varchar("sku_suffix", { length: 20 }),
+  measurementNotes: varchar("measurement_notes", { length: 500 }), // Feedback 09
 });
 
 export const productVariantsRelations = relations(productVariants, ({ one }) => ({
@@ -136,7 +169,12 @@ export const users = mysqlTable("users", {
   email: varchar({ length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   phone: varchar({ length: 20 }),
-  role: mysqlEnum(["customer", "admin"]).notNull().default("customer"),
+  // Feedback 22/27: least-privilege staff roles. catalogue_editor cannot see
+  // payment settings or manage admins; that is enforced server-side.
+  role: mysqlEnum(["customer", "catalogue_editor", "order_manager", "admin"])
+    .notNull()
+    .default("customer"),
+  emailVerifiedAt: timestamp("email_verified_at"), // Feedback 21
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
@@ -175,14 +213,19 @@ export const orders = mysqlTable("orders", {
   id: serial().primaryKey(),
   userId: int("user_id"),
   orderNumber: varchar("order_number", { length: 50 }).notNull().unique(),
+  // Feedback 19: full lifecycle — keep in sync with ORDER_STATUSES in constants.ts
   status: mysqlEnum([
     "pending",
+    "awaiting_payment",
+    "paid",
     "confirmed",
     "processing",
     "shipped",
     "delivered",
     "cancelled",
+    "return_requested",
     "returned",
+    "refunded",
   ])
     .notNull()
     .default("pending"),
@@ -193,14 +236,32 @@ export const orders = mysqlTable("orders", {
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 })
     .notNull()
     .default("0.00"),
+  couponId: int("coupon_id"),
+  couponCode: varchar("coupon_code", { length: 60 }),
   total: decimal({ precision: 10, scale: 2 }).notNull(),
-  paymentMethod: mysqlEnum("payment_method", ["cod", "bank_transfer"])
+  // COD active at launch; others reserved (Feedback 17 — only tested methods go live in UI)
+  paymentMethod: mysqlEnum("payment_method", [
+    "cod",
+    "bank_transfer",
+    "jazzcash",
+    "easypaisa",
+  ])
     .notNull()
     .default("cod"),
-  paymentStatus: mysqlEnum("payment_status", ["pending", "paid", "refunded"])
+  paymentStatus: mysqlEnum("payment_status", [
+    "pending",
+    "awaiting",
+    "paid",
+    "failed",
+    "refunded",
+  ])
     .notNull()
     .default("pending"),
+  paymentReference: varchar("payment_reference", { length: 120 }),
   shippingAddressJson: json("shipping_address_json").notNull(),
+  guestEmail: varchar("guest_email", { length: 255 }), // Feedback 15: guest checkout
+  guestPhone: varchar("guest_phone", { length: 20 }),
+  courier: varchar({ length: 100 }),
   trackingNumber: varchar("tracking_number", { length: 100 }),
   notes: text(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -213,6 +274,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     references: [users.id],
   }),
   items: many(orderItems),
+  statusHistory: many(orderStatusHistory),
 }));
 
 // ─── ORDER ITEMS ────────────────────────────────────────
@@ -330,3 +392,113 @@ export const wishlistsRelations = relations(wishlists, ({ one }) => ({
     references: [products.id],
   }),
 }));
+
+// ─── COLLECTIONS (Feedback 02/09/22) ────────────────────
+// A brand's named collection/drop (e.g. Maria B "M Prints", Zaha "Lawn 26").
+export const collections = mysqlTable("collections", {
+  id: serial().primaryKey(),
+  brandId: int("brand_id").notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  slug: varchar({ length: 255 }).notNull().unique(),
+  description: text(),
+  imageUrl: varchar("image_url", { length: 500 }),
+  season: varchar({ length: 60 }),
+  sourceUrl: varchar("source_url", { length: 500 }), // designer collection page
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: int("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const collectionsRelations = relations(collections, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [collections.brandId],
+    references: [brands.id],
+  }),
+  products: many(products),
+}));
+
+// ─── COUPONS (Feedback 22/24) ───────────────────────────
+export const coupons = mysqlTable("coupons", {
+  id: serial().primaryKey(),
+  code: varchar({ length: 60 }).notNull().unique(),
+  description: varchar({ length: 255 }),
+  discountType: mysqlEnum("discount_type", ["percent", "fixed"]).notNull(),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minSubtotal: decimal("min_subtotal", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  usageLimit: int("usage_limit"), // null = unlimited
+  usedCount: int("used_count").notNull().default(0),
+  startsAt: timestamp("starts_at"),
+  endsAt: timestamp("ends_at"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ─── ORDER STATUS HISTORY (Feedback 19) ─────────────────
+// Records staff member, time and optional note for every status change.
+export const orderStatusHistory = mysqlTable("order_status_history", {
+  id: serial().primaryKey(),
+  orderId: int("order_id").notNull(),
+  status: varchar({ length: 40 }).notNull(),
+  changedByUserId: int("changed_by_user_id"), // null = system
+  note: varchar({ length: 500 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderStatusHistory.orderId],
+    references: [orders.id],
+  }),
+  changedBy: one(users, {
+    fields: [orderStatusHistory.changedByUserId],
+    references: [users.id],
+  }),
+}));
+
+// ─── EMAIL LOG (Feedback 20) ────────────────────────────
+// Admin-visible log of sent/failed/retried messages. Never store secrets here.
+export const emailLog = mysqlTable("email_log", {
+  id: serial().primaryKey(),
+  toAddress: varchar("to_address", { length: 255 }).notNull(),
+  template: varchar({ length: 80 }).notNull(),
+  subject: varchar({ length: 255 }),
+  status: mysqlEnum(["queued", "sent", "failed", "retried"]).notNull().default("queued"),
+  attempts: int().notNull().default(0),
+  errorMessage: varchar("error_message", { length: 500 }),
+  relatedOrderId: int("related_order_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+// ─── AUTH TOKENS (Feedback 21) ──────────────────────────
+// Store only a hash of the token; expiring; single-use.
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: serial().primaryKey(),
+  userId: int("user_id").notNull(),
+  tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
+  id: serial().primaryKey(),
+  userId: int("user_id").notNull(),
+  tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ─── AUDIT LOG (Feedback 22/28) ─────────────────────────
+// Important product, order, payment and user changes. Never log secrets/PII bodies.
+export const auditLog = mysqlTable("audit_log", {
+  id: serial().primaryKey(),
+  actorUserId: int("actor_user_id"),
+  action: varchar({ length: 80 }).notNull(), // e.g. "order.status_change"
+  entityType: varchar("entity_type", { length: 60 }).notNull(),
+  entityId: varchar("entity_id", { length: 60 }),
+  meta: json(),
+  ipAddress: varchar("ip_address", { length: 64 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

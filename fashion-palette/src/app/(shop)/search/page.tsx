@@ -2,7 +2,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
+import { NAV_LINKS } from "@/lib/constants";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProductGrid from "@/components/product/ProductGrid";
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
@@ -28,7 +30,7 @@ function SearchContent() {
     })
       .then((res) => res.json())
       .then((data) => {
-        setResults(data);
+        setResults(data.products ?? []);
         setLoading(false);
       })
       .catch((err) => {
@@ -72,6 +74,17 @@ function SearchContent() {
                 We couldn&apos;t find anything matching &ldquo;{query}&rdquo;.
                 Try a different search term or browse our categories.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-6">
+                {NAV_LINKS.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className="px-4 py-2 text-[11px] uppercase tracking-wider border border-border/50 text-muted hover:border-accent hover:text-accent transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </>
