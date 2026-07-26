@@ -30,6 +30,10 @@ jobs:
             set -e
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            # The default nvm alias can be unset on this box, so a bare shell has
+            # no node on PATH. `nvm install --lts` is idempotent and activates it.
+            nvm install --lts >/dev/null 2>&1 || nvm use --lts
+            node -v || { echo "Node not available after nvm"; exit 1; }
             cd ~/htdocs/srv1815484.hstgr.cloud/Fashion-Palette/fashion-palette
             echo "==> Pull latest"
             git fetch origin main

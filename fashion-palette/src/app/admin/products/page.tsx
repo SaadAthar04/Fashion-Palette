@@ -39,11 +39,41 @@ export default function AdminProductsPage() {
   const products = data?.products || [];
   const pagination = data?.pagination || { page: 1, totalPages: 1, total: 0 };
 
+  const publishAll = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/products/bulk-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "published", all: true }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed");
+      return d as { affected: number };
+    },
+    onSuccess: (d) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`Published ${d.affected} product${d.affected === 1 ? "" : "s"}`);
+    },
+    onError: () => toast.error("Failed to publish drafts"),
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Products</h1>
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            isLoading={publishAll.isPending}
+            onClick={() => {
+              if (confirm("Publish ALL draft products? They will become visible on the storefront.")) {
+                publishAll.mutate();
+              }
+            }}
+          >
+            Publish all drafts
+          </Button>
           <Link href="/admin/products/import">
             <Button size="sm" variant="outline">Import CSV</Button>
           </Link>

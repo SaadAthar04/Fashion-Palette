@@ -69,10 +69,8 @@ export const BRAND_SOURCES: BrandSource[] = [
   {
     name: "Farah Talib Aziz",
     slug: "farah-talib-aziz",
-    hasSource: true, // in the sourcing list; confirm vs approved-brands list
-    collections: [
-      { name: "Luxury Lawn Unstitched", slug: "fta-luxury-lawn-unstitched", season: "Summer 2026", sourceUrl: "https://www.farahtalibaziz.com.pk/luxury-lawn-unstitched-2" },
-    ],
+    hasSource: false, // site is not a standard Shopify store — no products.json. Hidden until a source is supplied.
+    collections: [],
   },
   {
     name: "Jugnu Lahore",
@@ -148,8 +146,7 @@ export const BRAND_SOURCES: BrandSource[] = [
     slug: "saira-shakira",
     hasSource: true,
     collections: [
-      // NOTE: non-standard /drops/ URL (headless store) — importer falls back if products.json 404s.
-      { name: "Bloom Lawn", slug: "saira-shakira-bloom-lawn", sourceUrl: "https://online.sairashakira.com/drops/saira-shakira-bloom-saira-shakira-lawn" },
+      { name: "Bloom Lawn", slug: "saira-shakira-bloom-lawn", season: "Summer 2026", sourceUrl: "https://sairashakira.com/collections/bloom-saira-shakira-lawn" },
     ],
   },
   {
