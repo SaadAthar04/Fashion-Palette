@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { slugify } from "@/lib/utils";
@@ -21,6 +22,7 @@ type CategoryRow = {
 
 export default function AdminCategoriesPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryRow | null>(null);
   const [form, setForm] = useState({ name: "", slug: "", description: "", isActive: true, sortOrder: 0 });
@@ -122,7 +124,7 @@ export default function AdminCategoriesPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <button onClick={() => openEdit(cat)} className="p-1.5 hover:text-accent transition-colors"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => { if (confirm("Delete this category?")) deleteMutation.mutate(cat.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={async () => { if (await confirm({ title: "Delete category", message: "Delete this category? This cannot be undone.", danger: true, confirmText: "Delete" })) deleteMutation.mutate(cat.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>

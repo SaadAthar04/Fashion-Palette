@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus, Search, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { formatPrice, getImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -13,6 +14,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-products", search, page],
@@ -66,8 +68,14 @@ export default function AdminProductsPage() {
             size="sm"
             variant="outline"
             isLoading={publishAll.isPending}
-            onClick={() => {
-              if (confirm("Publish ALL draft products? They will become visible on the storefront.")) {
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: "Publish all drafts",
+                  message: "Publish ALL draft products? They will become visible on the storefront.",
+                  confirmText: "Publish all",
+                })
+              ) {
                 publishAll.mutate();
               }
             }}
@@ -151,7 +159,7 @@ export default function AdminProductsPage() {
                         <div className="flex items-center gap-2">
                           <Link href={`/admin/products/${p.id}/edit`} className="p-1.5 hover:text-accent transition-colors"><Edit className="w-4 h-4" /></Link>
                           <button
-                            onClick={() => { if (confirm("Deactivate this product?")) deleteMutation.mutate(p.id); }}
+                            onClick={async () => { if (await confirm({ title: "Deactivate product", message: "Deactivate this product? It will be hidden from the storefront.", danger: true, confirmText: "Deactivate" })) deleteMutation.mutate(p.id); }}
                             className="p-1.5 hover:text-sale transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />

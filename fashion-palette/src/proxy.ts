@@ -3,7 +3,15 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function proxy(request: NextRequest) {
-  const token = await getToken({ req: request });
+  // Behind nginx (HTTPS terminated at the proxy), next-auth stores the session in
+  // a `__Secure-` cookie. Tell getToken to look for it, and pass the secret
+  // explicitly so it works in the middleware runtime.
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie:
+      process.env.NEXTAUTH_URL?.startsWith("https://") ?? process.env.NODE_ENV === "production",
+  });
   const { pathname } = request.nextUrl;
 
   // Protect account pages (except login/register)

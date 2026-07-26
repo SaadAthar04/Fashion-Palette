@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ type BannerRow = {
 
 export default function AdminBannersPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<BannerRow | null>(null);
   const [form, setForm] = useState({ title: "", subtitle: "", imageUrl: "", linkUrl: "", ctaText: "", sortOrder: 0, isActive: true });
@@ -128,7 +130,7 @@ export default function AdminBannersPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <button onClick={() => openEdit(banner)} className="p-1.5 hover:text-accent transition-colors"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => { if (confirm("Delete this banner?")) deleteMutation.mutate(banner.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={async () => { if (await confirm({ title: "Delete banner", message: "Delete this banner? This cannot be undone.", danger: true, confirmText: "Delete" })) deleteMutation.mutate(banner.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>

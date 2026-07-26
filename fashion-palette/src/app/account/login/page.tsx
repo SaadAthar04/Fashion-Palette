@@ -37,7 +37,9 @@ export default function LoginPage() {
         toast.error("Invalid email or password");
       } else {
         toast.success("Welcome back!");
-        router.push("/account");
+        // Honor where the user was headed (e.g. /admin via middleware callbackUrl).
+        const cb = new URLSearchParams(window.location.search).get("callbackUrl");
+        router.push(cb || "/account");
         router.refresh();
       }
     } catch {

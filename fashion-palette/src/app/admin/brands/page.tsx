@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { slugify } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -22,6 +23,7 @@ type BrandRow = {
 
 export default function AdminBrandsPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<BrandRow | null>(null);
   const [form, setForm] = useState({ name: "", slug: "", description: "", logoUrl: "", isActive: true, sortOrder: 0 });
@@ -121,7 +123,7 @@ export default function AdminBrandsPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <button onClick={() => openEdit(brand)} className="p-1.5 hover:text-accent transition-colors"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => { if (confirm("Delete this brand?")) deleteMutation.mutate(brand.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={async () => { if (await confirm({ title: "Delete brand", message: "Delete this brand? This cannot be undone.", danger: true, confirmText: "Delete" })) deleteMutation.mutate(brand.id); }} className="p-1.5 hover:text-sale transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
