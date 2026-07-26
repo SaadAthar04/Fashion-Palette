@@ -182,13 +182,17 @@ async function main() {
         const exists = await db.select().from(schema.products).where(eq(schema.products.slug, slug)).limit(1);
         if (exists.length) { totalSkipped++; continue; }
 
+        try {
         const h = hay(p, coll.name);
         const stitch = inferStitch(h);
         const work = inferWork(h);
         const pieces = inferPieces(h);
         const { base, sale } = priceOf(p);
         const category = catBySlug.get(inferCategorySlug(work, stitch)) ?? catBySlug.get("unstitched")!;
-        const sku = (p.variants[0]?.sku || `FP-${brand.slug}-${p.id}`).slice(0, 100);
+        // Local SKU must be unique (Shopify variant SKUs repeat across A/B colourways).
+        // The designer's code is kept as originalProductCode (non-unique).
+        const sku = `FP-${brand.slug}-${p.id}`.slice(0, 100);
+        const designerCode = p.variants[0]?.sku?.slice(0, 120) || String(p.id);
 
         if (DRY) {
           console.log(`   • ${p.title}  [${stitch}/${work}${pieces ? "/" + pieces : ""}]  Rs ${base}${sale ? ` → ${sale}` : ""}  ${p.images.length} img`);
@@ -223,7 +227,7 @@ async function main() {
           basePrice: base,
           salePrice: sale,
           sku,
-          originalProductCode: String(p.id),
+          originalProductCode: designerCode,
           season: coll.season ?? null,
           sourceUrl: coll.sourceUrl,
           stitchType: stitch,
@@ -264,6 +268,11 @@ async function main() {
         totalCreated++;
         process.stdout.write(`   ✓ ${p.title.slice(0, 60)}\n`);
         await sleep(150);
+        } catch (e) {
+          // One bad product must never abort the whole import.
+          totalFailed++;
+          console.warn(`   ⚠ skipped "${p.title.slice(0, 40)}": ${(e as Error).message.slice(0, 90)}`);
+        }
       }
     }
   }
