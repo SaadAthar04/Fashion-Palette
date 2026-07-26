@@ -51,9 +51,9 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-[13px] text-white/40 leading-[1.8] mb-8">
-              Pakistan&apos;s premier multi-brand women&apos;s fashion
-              destination. Curating the finest collections from top Pakistani
-              designers since 2017.
+              A multi-brand destination for women&apos;s fashion — curated
+              unstitched, prints, embroidered and festive collections from
+              leading Pakistani designers.
             </p>
             <div className="flex gap-3">
               {[

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
 import type { Category } from "@/types";
 
 interface CategoryGridProps {
@@ -70,13 +71,18 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
               }
               className="group relative aspect-[3/4] overflow-hidden bg-surface"
             >
-              <Image
-                src={category.imageUrl || "/images/placeholder/category.jpg"}
-                alt={category.name}
-                fill
-                className="object-cover transition-transform duration-[800ms] ease-out group-hover:scale-105"
-                sizes="(max-width: 768px) 50vw, 33vw"
-              />
+              {category.imageUrl ? (
+                <Image
+                  src={getImageUrl(category.imageUrl)}
+                  alt={category.name}
+                  fill
+                  loading="lazy"
+                  className="object-cover object-top transition-transform duration-[800ms] ease-out group-hover:scale-105"
+                  sizes="(max-width: 768px) 50vw, 33vw"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-surface" />
+              )}
 
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />

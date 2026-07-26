@@ -1,24 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/utils";
+
+interface FeaturedCollectionsProps {
+  printsImage: string | null;
+  embroideredImage: string | null;
+}
 
 // Feedback 04: "Prints and Embroidered promotions" — links to the real category
-// pages (distinct promotional treatment vs the Shop-by-Category grid).
-const promos = [
-  {
-    title: "Prints",
-    subtitle: "Everyday summer lawn",
-    href: "/categories/prints",
-    image: "/images/categories/festive.jpg",
-  },
-  {
-    title: "Embroidered",
-    subtitle: "Luxury & festive craftsmanship",
-    href: "/categories/embroidered",
-    image: "/images/categories/luxury-wear.jpg",
-  },
-];
+// pages, using real product imagery from those categories.
+export default function FeaturedCollections({ printsImage, embroideredImage }: FeaturedCollectionsProps) {
+  const promos = [
+    { title: "Prints", subtitle: "Everyday summer lawn", href: "/categories/prints", image: printsImage },
+    { title: "Embroidered", subtitle: "Luxury & festive craftsmanship", href: "/categories/embroidered", image: embroideredImage },
+  ];
 
-export default function FeaturedCollections() {
   return (
     <section className="py-16 md:py-20 lg:py-24">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8">
@@ -39,13 +35,18 @@ export default function FeaturedCollections() {
               href={promo.href}
               className="group relative aspect-[16/10] md:aspect-[16/9] overflow-hidden bg-surface"
             >
-              <Image
-                src={promo.image}
-                alt={promo.title}
-                fill
-                className="object-cover transition-transform duration-[800ms] ease-out group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
+              {promo.image ? (
+                <Image
+                  src={getImageUrl(promo.image)}
+                  alt={promo.title}
+                  fill
+                  loading="lazy"
+                  className="object-cover object-top transition-transform duration-[800ms] ease-out group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-surface" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                 <p className="text-[10px] text-white/60 uppercase tracking-[0.25em] mb-2 font-medium">

@@ -26,6 +26,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   images: {
+    // Product images are already resized + converted to WebP at import time,
+    // so on-the-fly optimization just burns the small VPS's CPU and makes
+    // pages crawl. Serve the pre-optimized files directly (fast, no CPU).
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },

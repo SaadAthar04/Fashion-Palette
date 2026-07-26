@@ -3,89 +3,63 @@
 import Link from "next/link";
 import Image from "next/image";
 import Carousel from "@/components/ui/Carousel";
-import type { Brand } from "@/types";
+import { getImageUrl } from "@/lib/utils";
 
-interface BrandCarouselProps {
-  brands: Brand[];
+export interface BrandCard {
+  id: number;
+  name: string;
+  slug: string;
+  image: string | null;
 }
 
-const fallbackBrands = [
-  {
-    name: "Gul Ahmed",
-    slug: "gul-ahmed",
-    logoUrl: "/images/brands/gul-ahmed.png",
-  },
-  { name: "Khaadi", slug: "khaadi", logoUrl: "/images/brands/khaadi.png" },
-  {
-    name: "Sana Safinaz",
-    slug: "sana-safinaz",
-    logoUrl: "/images/brands/sana-safinaz.png",
-  },
-  { name: "Maria B", slug: "maria-b", logoUrl: "/images/brands/maria-b.png" },
-  {
-    name: "Sapphire",
-    slug: "sapphire",
-    logoUrl: "/images/brands/sapphire.png",
-  },
-  {
-    name: "Limelight",
-    slug: "limelight",
-    logoUrl: "/images/brands/limelight.png",
-  },
-  {
-    name: "Alkaram Studio",
-    slug: "alkaram-studio",
-    logoUrl: "/images/brands/alkaram.png",
-  },
-  { name: "Baroque", slug: "baroque", logoUrl: "/images/brands/baroque.png" },
-];
+interface BrandCarouselProps {
+  brands: BrandCard[];
+}
 
 export default function BrandCarousel({ brands }: BrandCarouselProps) {
-  const items =
-    brands.length > 0
-      ? brands.map((b) => ({
-          name: b.name,
-          slug: b.slug,
-          logoUrl: b.logoUrl,
-        }))
-      : fallbackBrands;
+  if (!brands.length) return null;
 
   return (
-    <section className="py-16 md:py-20 lg:py-24">
+    <section className="py-16 md:py-20 lg:py-24 bg-surface/40">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center mb-10 md:mb-14">
-          <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-accent">
-            Trusted Names
-          </span>
-          <h2 className="text-2xl md:text-3xl lg:text-[2.5rem] font-light mt-3 tracking-tight">
-            Shop by Brand
-          </h2>
+          <span className="text-[11px] font-medium uppercase tracking-[0.25em] text-accent">Trusted Names</span>
+          <h2 className="text-2xl md:text-3xl lg:text-[2.5rem] font-light mt-3 tracking-tight">Shop by Brand</h2>
           <div className="w-12 h-[1px] bg-accent mx-auto mt-4" />
         </div>
 
-        <Carousel slidesToShow={6} showArrows showDots={false} loop>
-          {items.map((brand) => (
-            <Link
-              key={brand.slug}
-              href={`/brands/${brand.slug}`}
-              className="flex flex-col items-center gap-4 py-4 group"
-            >
-              <div className="w-24 h-24 md:w-28 md:h-28 bg-surface border border-border/50 flex items-center justify-center p-5 group-hover:border-accent/40 group-hover:bg-white transition-all duration-400">
-                <Image
-                  src={brand.logoUrl || "/images/placeholder/brand.png"}
-                  alt={brand.name}
-                  width={80}
-                  height={80}
-                  className="object-contain opacity-50 group-hover:opacity-90 transition-opacity duration-400"
-                />
+        <Carousel slidesToShow={5} showArrows showDots={false} loop>
+          {brands.map((brand) => (
+            <Link key={brand.slug} href={`/brands/${brand.slug}`} className="block px-2 group">
+              <div className="relative aspect-[3/4] overflow-hidden bg-white">
+                {brand.image ? (
+                  <Image
+                    src={getImageUrl(brand.image)}
+                    alt={brand.name}
+                    fill
+                    loading="lazy"
+                    className="object-cover object-top transition-transform duration-[900ms] ease-out group-hover:scale-105"
+                    sizes="(max-width: 768px) 50vw, 20vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-surface">
+                    <span className="text-2xl font-light text-muted/40">{brand.name.charAt(0)}</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-              <span className="text-[11px] font-medium tracking-[0.1em] text-muted text-center group-hover:text-accent transition-colors duration-300">
+              <p className="text-center text-[12px] font-medium tracking-[0.08em] mt-3 group-hover:text-accent transition-colors">
                 {brand.name}
-              </span>
+              </p>
             </Link>
           ))}
         </Carousel>
+
+        <div className="text-center mt-10">
+          <Link href="/brands" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent hover:text-accent-hover">
+            View all brands →
+          </Link>
+        </div>
       </div>
     </section>
   );
