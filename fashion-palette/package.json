@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "tsx src/lib/db/seed.ts",
-    "db:import": "tsx scripts/import-shopify.ts"
+    "db:import": "tsx scripts/import-shopify.ts",
+    "db:passwd": "tsx scripts/set-admin-password.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",
