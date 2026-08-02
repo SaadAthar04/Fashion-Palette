@@ -282,8 +282,10 @@ export async function POST(request: Request) {
           paymentMethod: data.paymentMethod,
           paymentStatus: "pending",
           shippingAddressJson: data.shippingAddress,
-          guestEmail: userId ? null : data.email,
-          guestPhone: userId ? null : data.shippingAddress.phone,
+          // Store the email/phone entered at checkout as the order's contact,
+          // even for logged-in users — that's where order updates should go.
+          guestEmail: data.email,
+          guestPhone: data.shippingAddress.phone,
           notes: data.notes || null,
         })
         .$returningId();
@@ -335,10 +337,8 @@ export async function POST(request: Request) {
       return newOrderId;
     });
 
-    // Feedback 20: order-received email (never blocks/fails the order).
-    const customerEmail = userId
-      ? (await db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1))[0]?.email
-      : data.email;
+    // Feedback 20: order-received email goes to the checkout contact email.
+    const customerEmail = data.email;
     if (customerEmail) {
       const mail = orderReceivedEmail({
         orderNumber,
