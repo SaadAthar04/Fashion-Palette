@@ -32,17 +32,18 @@ export const FOOTER_LINKS = {
     title: "Customer Service",
     links: [
       { label: "FAQ", href: "/faq" },
-      { label: "Shipping & Delivery", href: "/shipping" },
-      { label: "Returns & Exchanges", href: "/returns" },
       { label: "Track Order", href: "/account/orders" },
     ],
   },
+  // All five policy pages grouped together for consistency.
   information: {
     title: "Information",
     links: [
-      { label: "Payment", href: "/payment" },
       { label: "Terms & Conditions", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
+      { label: "Returns & Refunds", href: "/returns" },
+      { label: "Shipping & Delivery", href: "/shipping" },
+      { label: "Payment Policy", href: "/payment" },
     ],
   },
 } as const;
