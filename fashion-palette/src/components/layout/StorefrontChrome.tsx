@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import CookieConsent from "@/components/shared/CookieConsent";
 
 // Feedback 26: the storefront chrome (top bar, header/nav, footer, WhatsApp
 // widget) must not appear inside the admin panel. usePathname keeps this a
@@ -30,6 +31,7 @@ export default function StorefrontChrome({
       <main className="flex-1">{children}</main>
       {footer}
       {whatsapp}
+      <CookieConsent />
     </>
   );
 }

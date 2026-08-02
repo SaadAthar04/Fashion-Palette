@@ -6,6 +6,8 @@ import { returns, orders, orderItems, orderStatusHistory, auditLog } from "@/lib
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireRole } from "@/lib/admin";
+import { sendEmail, ADMIN_NOTIFY } from "@/lib/email/mailer";
+import { adminReturnRequestEmail } from "@/lib/email/templates";
 
 const STAFF_ROLES = ["admin", "order_manager"];
 const RETURN_WINDOW_MS = 48 * 60 * 60 * 1000; // Feedback 22: 48-hour reporting window
@@ -108,6 +110,10 @@ export async function POST(req: NextRequest) {
       meta: { orderNumber: order.orderNumber },
     });
   });
+
+  // Notify staff (never blocks).
+  const adminMail = adminReturnRequestEmail(order.orderNumber, data.reason);
+  await sendEmail({ to: ADMIN_NOTIFY, template: "admin_return_request", subject: adminMail.subject, html: adminMail.html, relatedOrderId: order.id });
 
   return NextResponse.json({ ok: true, id: res.id });
 }

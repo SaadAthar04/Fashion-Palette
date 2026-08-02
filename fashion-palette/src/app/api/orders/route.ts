@@ -17,7 +17,7 @@ import { checkoutSchema } from "@/lib/validators";
 import { generateOrderNumber } from "@/lib/utils";
 import { getDeliveryConfig } from "@/lib/settings";
 import { sendEmail } from "@/lib/email/mailer";
-import { orderReceivedEmail, adminNewOrderEmail } from "@/lib/email/templates";
+import { orderReceivedEmail, adminNewOrderEmail, adminLowStockEmail } from "@/lib/email/templates";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const STAFF_ROLES = ["admin", "order_manager"];
@@ -360,6 +360,21 @@ export async function POST(request: Request) {
     if (adminEmail) {
       const adminMail = adminNewOrderEmail(orderNumber, total.toFixed(2), data.shippingAddress.fullName);
       await sendEmail({ to: adminEmail, template: "admin_new_order", subject: adminMail.subject, html: adminMail.html, relatedOrderId: orderId });
+
+      // Feedback 12/31: low-stock alert for products that just fell to/below threshold.
+      try {
+        const orderedIds = [...new Set(validated.map((i) => i.productId))];
+        if (orderedIds.length) {
+          const low = await db
+            .select({ name: products.name, sku: products.sku, stock: products.stockQuantity })
+            .from(products)
+            .where(and(inArray(products.id, orderedIds), sql`${products.stockQuantity} <= ${products.lowStockThreshold}`));
+          if (low.length) {
+            const mail = adminLowStockEmail(low);
+            await sendEmail({ to: adminEmail, template: "admin_low_stock", subject: mail.subject, html: mail.html });
+          }
+        }
+      } catch { /* alerting must never break checkout */ }
     }
 
     return NextResponse.json({

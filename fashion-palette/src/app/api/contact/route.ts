@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { sendEmail, ADMIN_NOTIFY } from "@/lib/email/mailer";
+import { adminContactEmail } from "@/lib/email/templates";
 
 // Feedback 38: rate-limit public forms. Feedback 40: provide a working contact
 // route. Messages are persisted to the audit log so nothing is silently lost;
@@ -34,6 +36,10 @@ export async function POST(req: NextRequest) {
     meta: data,
     ipAddress: ip,
   });
+
+  // Notify staff (with the sender as Reply-To flow via message body).
+  const mail = adminContactEmail(data.name, data.email, data.subject, data.message);
+  await sendEmail({ to: ADMIN_NOTIFY, template: "admin_contact", subject: mail.subject, html: mail.html });
 
   return NextResponse.json({ ok: true });
 }

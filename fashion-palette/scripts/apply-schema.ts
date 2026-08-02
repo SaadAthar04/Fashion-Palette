@@ -47,6 +47,18 @@ async function main() {
     console.log("• users.is_active already present");
   }
 
+  // Feedback 28: staff MFA email-OTP codes.
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS \`mfa_codes\` (
+      \`user_id\` int NOT NULL,
+      \`code_hash\` varchar(255) NOT NULL,
+      \`expires_at\` timestamp NOT NULL,
+      \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (\`user_id\`)
+    )`
+  );
+  console.log("✓ mfa_codes table ensured");
+
   // Feedback 24: settings key-value store.
   await pool.query(
     `CREATE TABLE IF NOT EXISTS \`site_settings\` (

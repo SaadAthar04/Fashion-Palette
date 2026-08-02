@@ -513,6 +513,15 @@ export const siteSettings = mysqlTable("site_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
+// ─── MFA CODES (Feedback 28) ────────────────────────────
+// One active email-OTP per user for staff two-factor login. Codes are hashed.
+export const mfaCodes = mysqlTable("mfa_codes", {
+  userId: int("user_id").primaryKey(),
+  codeHash: varchar("code_hash", { length: 255 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ─── EMAIL LOG (Feedback 20) ────────────────────────────
 // Admin-visible log of sent/failed/retried messages. Never store secrets here.
 export const emailLog = mysqlTable("email_log", {

@@ -13,6 +13,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [mfaStep, setMfaStep] = useState(false); // staff email-OTP (Feedback 28)
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -31,9 +33,15 @@ export default function LoginPage() {
         redirect: false,
         email,
         password,
+        otp: otp || undefined,
       });
 
-      if (result?.error) {
+      if (result?.error === "MFA_REQUIRED") {
+        setMfaStep(true);
+        toast.message("We emailed you a 6-digit login code. Enter it to continue.");
+      } else if (result?.error === "MFA_INVALID") {
+        toast.error("That code is invalid or expired. Please try again.");
+      } else if (result?.error) {
         toast.error("Invalid email or password");
       } else {
         toast.success("Welcome back!");
@@ -81,8 +89,20 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
+          {mfaStep && (
+            <Input
+              label="Login code (emailed to you)"
+              id="otp"
+              inputMode="numeric"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="6-digit code"
+              autoFocus
+              required
+            />
+          )}
           <Button type="submit" isLoading={isLoading} className="w-full" size="lg">
-            Sign In
+            {mfaStep ? "Verify & Sign In" : "Sign In"}
           </Button>
         </form>
 

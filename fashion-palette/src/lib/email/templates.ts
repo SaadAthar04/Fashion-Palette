@@ -93,6 +93,67 @@ export function adminNewOrderEmail(orderNumber: string, total: string, customerN
   };
 }
 
+const RETURN_COPY: Record<string, { title: string; body: string }> = {
+  approved: { title: "Your return is approved", body: "We&rsquo;ve approved your return request. We&rsquo;ll share the next steps and any return instructions shortly." },
+  rejected: { title: "Update on your return request", body: "After review, your return request was not approved. Please see our reply for the reason; your statutory rights are unaffected." },
+  item_received: { title: "We&rsquo;ve received your returned item", body: "Your returned item has arrived and is now being inspected." },
+  inspected: { title: "Your return has been inspected", body: "We&rsquo;ve completed inspection of your returned item and will confirm the outcome shortly." },
+  replacement_sent: { title: "Your replacement is on its way", body: "A replacement for your return has been dispatched." },
+  refunded: { title: "Your refund has been processed", body: "Your refund has been initiated. It may take a few business days to reflect, depending on your bank or wallet." },
+};
+
+export function returnStatusEmail(orderNumber: string, status: string, customerName?: string) {
+  const copy = RETURN_COPY[status] ?? { title: "Update on your return", body: `Your return status is now: ${status}.` };
+  return {
+    subject: `${copy.title} — Order ${orderNumber}`,
+    html: layout(copy.title,
+      `<p style="font-size:14px;color:#66636b;">Hi ${customerName || "there"}, ${copy.body}</p>
+       <p style="font-size:13px;color:#66636b;">Order number: <strong>${orderNumber}</strong></p>
+       <p style="margin-top:20px;">${btn(`${SITE}/account/orders`, "View order")}</p>`),
+  };
+}
+
+export function adminReturnRequestEmail(orderNumber: string, reason: string) {
+  return {
+    subject: `Return requested — Order ${orderNumber}`,
+    html: layout("New return request",
+      `<p style="font-size:14px;color:#66636b;">A customer reported an issue with order <strong>${orderNumber}</strong>.</p>
+       <p style="font-size:13px;color:#66636b;">Reason: ${reason.slice(0, 400)}</p>
+       <p style="margin-top:20px;">${btn(`${SITE}/admin/returns`, "Open returns queue")}</p>`),
+  };
+}
+
+export function adminContactEmail(name: string, email: string, subject: string, message: string) {
+  return {
+    subject: `Contact message: ${subject}`.slice(0, 120),
+    html: layout("New contact message",
+      `<p style="font-size:13px;color:#66636b;">From: <strong>${name}</strong> (${email})</p>
+       <p style="font-size:13px;color:#66636b;">Subject: ${subject}</p>
+       <p style="font-size:14px;color:#1b1b1f;white-space:pre-wrap;">${message.slice(0, 2000)}</p>`),
+  };
+}
+
+export function adminLowStockEmail(items: { name: string; sku: string; stock: number }[]) {
+  const rows = items.map((i) => `<tr><td style="padding:4px 0;font-size:13px;">${i.name} (${i.sku})</td><td style="padding:4px 0;font-size:13px;text-align:right;font-weight:700;">${i.stock}</td></tr>`).join("");
+  return {
+    subject: `Low stock alert — ${items.length} product(s)`,
+    html: layout("Low stock alert",
+      `<p style="font-size:14px;color:#66636b;">These products have reached their low-stock threshold:</p>
+       <table style="width:100%;border-collapse:collapse;margin:12px 0;">${rows}</table>
+       <p style="margin-top:20px;">${btn(`${SITE}/admin/reports`, "View reports")}</p>`),
+  };
+}
+
+export function mfaCodeEmail(code: string) {
+  return {
+    subject: "Your Fashion Palette login code",
+    html: layout("Your login code",
+      `<p style="font-size:14px;color:#66636b;">Use this code to finish signing in. It expires in 10 minutes.</p>
+       <p style="font-size:30px;font-weight:700;letter-spacing:6px;text-align:center;margin:20px 0;">${code}</p>
+       <p style="font-size:12px;color:#66636b;">If you didn&rsquo;t try to sign in, change your password and contact an administrator.</p>`),
+  };
+}
+
 export function passwordResetEmail(resetUrl: string) {
   return {
     subject: "Reset your Fashion Palette password",

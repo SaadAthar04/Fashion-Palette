@@ -16,6 +16,9 @@ const SMTP_PASS = process.env.SMTP_PASS;
 const EMAIL_FROM = process.env.EMAIL_FROM || "Fashion Palette <orders@fashionpalette.pk>";
 const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@fashionpalette.pk";
 
+// Where internal notifications (new order, return request, contact, low stock) go.
+export const ADMIN_NOTIFY = process.env.ADMIN_EMAIL || process.env.EMAIL_REPLY_TO || "support@fashionpalette.pk";
+
 let transporter: nodemailer.Transporter | null = null;
 function getTransport() {
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;

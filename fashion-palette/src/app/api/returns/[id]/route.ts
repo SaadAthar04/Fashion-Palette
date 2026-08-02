@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { returns, orders, orderItems, orderStatusHistory, products, productVariants, auditLog } from "@/lib/db/schema";
+import { returns, orders, orderItems, orderStatusHistory, products, productVariants, auditLog, users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireRole } from "@/lib/admin";
+import { sendEmail } from "@/lib/email/mailer";
+import { returnStatusEmail } from "@/lib/email/templates";
 
 const STAFF_ROLES = ["admin", "order_manager"];
 
@@ -104,6 +106,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       meta: { from: current.status, to: data.status ?? current.status, refunded: movingToRefunded },
     });
   });
+
+  // Feedback 31: notify the customer on meaningful return status changes.
+  const NOTIFY = ["approved", "rejected", "item_received", "inspected", "replacement_sent", "refunded"];
+  if (data.status && data.status !== current.status && NOTIFY.includes(data.status)) {
+    const order = await db.query.orders.findFirst({ where: eq(orders.id, current.orderId) });
+    let email = order?.guestEmail ?? null;
+    let name = (order?.shippingAddressJson as { fullName?: string } | null)?.fullName;
+    if (!email && order?.userId) {
+      const [u] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, order.userId)).limit(1);
+      email = u?.email ?? null;
+      name = name ?? u?.name;
+    }
+    if (email && order) {
+      const mail = returnStatusEmail(order.orderNumber, data.status, name ?? undefined);
+      await sendEmail({ to: email, template: `return_${data.status}`, subject: mail.subject, html: mail.html, relatedOrderId: order.id });
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }
