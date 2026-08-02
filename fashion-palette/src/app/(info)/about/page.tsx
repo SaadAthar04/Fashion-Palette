@@ -43,7 +43,7 @@ export default function AboutPage() {
             {[
               { title: "100% Authentic", desc: "Every product is sourced directly from authorized retailers and brands." },
               { title: "Pan-Pakistan Delivery", desc: "We deliver to every city and town across Pakistan." },
-              { title: "Easy Returns", desc: "7-day hassle-free return and exchange policy." },
+              { title: "48-Hour Issue Window", desc: "Report any defect or wrong item within 48 hours of delivery." },
               { title: "Secure Shopping", desc: "Cash on delivery and secure bank transfer options." },
             ].map((item) => (
               <div key={item.title} className="bg-surface p-6">

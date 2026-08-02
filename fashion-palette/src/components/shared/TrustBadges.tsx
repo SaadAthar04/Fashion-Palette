@@ -15,8 +15,8 @@ const badges = [
   },
   {
     icon: RotateCcw,
-    label: "Easy Returns",
-    description: "7-day return policy",
+    label: "48-Hour Window",
+    description: "Report any issue within 48 hrs",
   },
   {
     icon: Banknote,
@@ -25,8 +25,8 @@ const badges = [
   },
   {
     icon: ShieldCheck,
-    label: "100% Authentic",
-    description: "Guaranteed original",
+    label: "Secure Checkout",
+    description: "Server-verified & protected",
   },
 ];
 

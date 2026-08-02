@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products, productImages, productVariants, auditLog } from "@/lib/db/schema";
 import { eq, and, or, like, desc, asc, sql, count } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
+
+const STAFF_ROLES = ["admin", "catalogue_editor", "order_manager"];
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -15,7 +19,16 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "12");
   const offset = (page - 1) * limit;
 
+  // Feedback 01: only staff may see drafts/inactive via this endpoint (feeds).
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as { role?: string } | undefined)?.role ?? "guest";
+  const isStaff = STAFF_ROLES.includes(role);
+
   const conditions = [];
+  if (!isStaff) {
+    conditions.push(eq(products.isActive, true));
+    conditions.push(eq(products.publishStatus, "published"));
+  }
   if (category) conditions.push(eq(products.categoryId, parseInt(category)));
   if (brand) conditions.push(eq(products.brandId, parseInt(brand)));
   if (search) {

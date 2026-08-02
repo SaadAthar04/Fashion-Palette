@@ -17,10 +17,11 @@ export default function ReturnsPage() {
 
       <div className="space-y-6 text-[14px] leading-relaxed">
         <section>
-          <h2 className="text-base font-semibold mb-2">Return window</h2>
+          <h2 className="text-base font-semibold mb-2">Reporting an issue (48 hours)</h2>
           <p className="text-muted">
-            Eligible items may be returned or exchanged within 7 days of delivery, provided they are
-            unworn, unwashed and in their original condition with tags and packaging intact.
+            Please inspect your order on delivery and report any defect, damage or wrong/mis-described item
+            within <strong className="text-primary">48 hours of delivery</strong> (with photos/video). We do
+            not offer change-of-mind returns. This does not affect any rights you have under applicable law.
           </p>
         </section>
         <section>

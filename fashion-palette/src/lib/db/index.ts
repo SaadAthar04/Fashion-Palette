@@ -14,6 +14,8 @@ const pool =
     user: process.env.DATABASE_USER || "root",
     password: process.env.DATABASE_PASSWORD || "",
     database: process.env.DATABASE_NAME || "fashion_palette",
+    // Feedback 02: full Unicode so names like "Suiyō" / CJK don't corrupt to "?".
+    charset: "utf8mb4",
     waitForConnections: true,
     connectionLimit: 10,
   });

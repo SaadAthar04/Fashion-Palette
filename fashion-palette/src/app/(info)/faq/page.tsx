@@ -34,7 +34,7 @@ const faqs = [
     questions: [
       {
         q: "What is your return policy?",
-        a: "We offer a 7-day return/exchange policy. Items must be unused, unworn, and in their original packaging with tags intact.",
+        a: "Please report any defect, damage or wrong item within 48 hours of delivery with photos/video. We don't accept change-of-mind returns. See our Returns & Refunds policy for full details.",
       },
       {
         q: "How do I initiate a return?",

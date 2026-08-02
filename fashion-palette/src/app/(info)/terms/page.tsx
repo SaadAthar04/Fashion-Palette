@@ -49,9 +49,9 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-semibold mt-6 mb-3">6. Returns & Refunds</h2>
         <p className="text-sm text-muted leading-relaxed">
-          Returns are accepted within 7 days of delivery. Items must be unused, unworn, and in original
-          packaging. Refunds are processed within 5-7 business days. Sale items may have different
-          return policies as noted on the product page.
+          Please report any defect, damage or wrong/mis-described item within 48 hours of delivery with
+          supporting photos or video. We do not offer change-of-mind returns. Nothing here removes any
+          rights you may have under applicable law. Full details are in our Returns &amp; Refunds policy.
         </p>
 
         <h2 className="text-xl font-semibold mt-6 mb-3">7. Contact</h2>
