@@ -32,6 +32,11 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) return null;
 
+        // Feedback 27: deactivated accounts cannot sign in.
+        if (user.isActive === false) {
+          throw new Error("This account has been deactivated. Please contact an administrator.");
+        }
+
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isValid) return null;
 

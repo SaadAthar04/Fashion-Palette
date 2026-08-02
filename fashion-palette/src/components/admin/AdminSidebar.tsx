@@ -2,22 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, FolderTree, Tag, Image, Users, Menu, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Tag, Image, Users, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+// Feedback 27: show a link only to roles that can use it (least privilege).
 const sidebarLinks = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
-  { icon: Package, label: "Products", href: "/admin/products" },
-  { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
-  { icon: FolderTree, label: "Categories", href: "/admin/categories" },
-  { icon: Tag, label: "Brands", href: "/admin/brands" },
-  { icon: Image, label: "Banners", href: "/admin/banners" },
-  { icon: Users, label: "Users", href: "/admin/users" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin", roles: ["admin", "order_manager", "catalogue_editor"] },
+  { icon: Package, label: "Products", href: "/admin/products", roles: ["admin", "catalogue_editor"] },
+  { icon: ShoppingCart, label: "Orders", href: "/admin/orders", roles: ["admin", "order_manager"] },
+  { icon: RotateCcw, label: "Returns", href: "/admin/returns", roles: ["admin", "order_manager"] },
+  { icon: FolderTree, label: "Categories", href: "/admin/categories", roles: ["admin", "catalogue_editor"] },
+  { icon: Tag, label: "Brands", href: "/admin/brands", roles: ["admin", "catalogue_editor"] },
+  { icon: Image, label: "Banners", href: "/admin/banners", roles: ["admin", "catalogue_editor"] },
+  { icon: Users, label: "Users", href: "/admin/users", roles: ["admin"] },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const role = (session?.user as { role?: string } | undefined)?.role ?? "admin";
+  const links = sidebarLinks.filter((l) => l.roles.includes(role));
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -40,7 +46,7 @@ export default function AdminSidebar() {
           <p className="text-xs text-white/50 mt-1">Admin Panel</p>
         </div>
         <nav className="p-4 space-y-1">
-          {sidebarLinks.map((link) => {
+          {links.map((link) => {
             const isActive = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href));
             return (
               <Link

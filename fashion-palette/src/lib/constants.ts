@@ -148,3 +148,15 @@ export const ORDER_STATUSES = {
   returned: { label: "Returned", color: "bg-gray-100 text-gray-800" },
   refunded: { label: "Refunded", color: "bg-slate-100 text-slate-800" },
 } as const;
+
+// Feedback 22: return lifecycle states shown in the admin returns queue.
+export const RETURN_STATUSES = {
+  requested: { label: "Requested", color: "bg-yellow-100 text-yellow-800" },
+  approved: { label: "Approved", color: "bg-blue-100 text-blue-800" },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-700" },
+  item_received: { label: "Item Received", color: "bg-indigo-100 text-indigo-800" },
+  inspected: { label: "Inspected", color: "bg-purple-100 text-purple-800" },
+  replacement_sent: { label: "Replacement Sent", color: "bg-teal-100 text-teal-800" },
+  refunded: { label: "Refunded", color: "bg-green-100 text-green-800" },
+  closed: { label: "Closed", color: "bg-gray-100 text-gray-700" },
+} as const;

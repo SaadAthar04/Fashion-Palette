@@ -174,6 +174,9 @@ export const users = mysqlTable("users", {
   role: mysqlEnum(["customer", "catalogue_editor", "order_manager", "admin"])
     .notNull()
     .default("customer"),
+  // Feedback 27: deactivating a staff/customer account blocks login and all
+  // server-side actions (enforced in requireRole), effectively a force-logout.
+  isActive: boolean("is_active").notNull().default(true),
   emailVerifiedAt: timestamp("email_verified_at"), // Feedback 21
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
@@ -453,6 +456,49 @@ export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one 
     fields: [orderStatusHistory.changedByUserId],
     references: [users.id],
   }),
+}));
+
+// ─── RETURNS & REFUNDS (Feedback 22) ────────────────────
+// One record per return request, tracked from first report to final resolution.
+// Evidence, refund detail and inspection notes live here (never spreadsheets).
+export const returns = mysqlTable("returns", {
+  id: serial().primaryKey(),
+  orderId: int("order_id").notNull(),
+  userId: int("user_id"), // null for guest orders
+  status: mysqlEnum([
+    "requested",
+    "approved",
+    "rejected",
+    "item_received",
+    "inspected",
+    "replacement_sent",
+    "refunded",
+    "closed",
+  ])
+    .notNull()
+    .default("requested"),
+  reason: text().notNull(),
+  itemsJson: json("items_json"), // affected items: [{ name, quantity }]
+  evidenceUrls: json("evidence_urls"), // photo/video links supplied by customer
+  returnAuthorization: varchar("return_authorization", { length: 100 }),
+  inspectionResult: text("inspection_result"),
+  courier: varchar({ length: 100 }),
+  trackingNumber: varchar("tracking_number", { length: 100 }),
+  // Refund detail — kept once, to prevent duplicate refunds.
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }),
+  refundMethod: varchar("refund_method", { length: 60 }),
+  refundReference: varchar("refund_reference", { length: 120 }),
+  refundedAt: timestamp("refunded_at"),
+  handledByUserId: int("handled_by_user_id"),
+  staffNotes: text("staff_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const returnsRelations = relations(returns, ({ one }) => ({
+  order: one(orders, { fields: [returns.orderId], references: [orders.id] }),
+  user: one(users, { fields: [returns.userId], references: [users.id] }),
+  handledBy: one(users, { fields: [returns.handledByUserId], references: [users.id] }),
 }));
 
 // ─── EMAIL LOG (Feedback 20) ────────────────────────────
