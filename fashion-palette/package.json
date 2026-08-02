@@ -13,7 +13,8 @@
     "db:import": "tsx scripts/import-shopify.ts",
     "db:passwd": "tsx scripts/set-admin-password.ts",
     "db:del-samples": "tsx scripts/delete-samples.ts",
-    "db:del-order": "tsx scripts/delete-order.ts"
+    "db:del-order": "tsx scripts/delete-order.ts",
+    "db:clean-catalogue": "tsx scripts/clean-catalogue.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",

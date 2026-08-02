@@ -24,6 +24,7 @@ import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/lib/db/index";
 import * as schema from "../src/lib/db/schema";
 import { BRAND_SOURCES } from "../src/lib/data/brand-sources";
+import { summarize } from "../src/lib/text";
 
 // ── CLI args ──────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -219,7 +220,7 @@ async function main() {
         const inserted = await db.insert(schema.products).values({
           name: p.title.slice(0, 500),
           slug,
-          shortDescription: stripHtml(p.body_html).slice(0, 1000) || null,
+          shortDescription: summarize(stripHtml(p.body_html)) || null,
           description: stripHtml(p.body_html) || null,
           brandId: brandRow.id,
           categoryId: category.id,
@@ -238,8 +239,8 @@ async function main() {
           isActive: true,
           publishStatus: "draft", // review before publishing
           stockQuantity: p.variants.some((v) => v.available) ? 10 : 0,
-          metaTitle: p.title.slice(0, 255),
-          metaDescription: stripHtml(p.body_html).slice(0, 300) || null,
+          metaTitle: `${p.title} — ${brand.name} | Fashion Palette`.slice(0, 255),
+          metaDescription: summarize(stripHtml(p.body_html), 155) || null,
         });
         const productId = Number((inserted as unknown as { insertId: number }).insertId ?? (inserted as unknown as [{ insertId: number }])[0]?.insertId);
 
