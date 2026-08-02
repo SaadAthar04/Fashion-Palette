@@ -3,41 +3,66 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Search, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { ORDER_STATUSES } from "@/lib/constants";
 
 export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
 
+  const buildParams = (extra?: Record<string, string>) => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (search) params.set("q", search);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    Object.entries(extra || {}).forEach(([k, v]) => params.set(k, v));
+    return params;
+  };
+
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-orders", statusFilter, search, page],
+    queryKey: ["admin-orders", statusFilter, search, from, to, page],
     queryFn: async () => {
-      const params = new URLSearchParams({ page: String(page), limit: "20" });
-      if (statusFilter !== "all") params.set("status", statusFilter);
-      if (search) params.set("q", search);
-      const res = await fetch(`/api/orders?${params}`);
+      const res = await fetch(`/api/orders?${buildParams()}`);
       return res.json();
     },
   });
+
+  const exportCsv = () => {
+    const params = buildParams({ format: "csv" });
+    params.delete("page");
+    params.delete("limit");
+    window.open(`/api/orders?${params}`, "_blank");
+  };
 
   const orders = data?.orders || [];
   const pagination = data?.pagination || { page: 1, totalPages: 1, total: 0 };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Orders</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-bold">Orders</h1>
+        <button
+          onClick={exportCsv}
+          className="inline-flex items-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm font-medium hover:bg-surface transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+      </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative max-w-sm">
+      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-3 mb-6">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search by order number..."
+            placeholder="Search order #, name, phone, email, payment ref…"
             className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
           />
         </div>
@@ -51,6 +76,14 @@ export default function AdminOrdersPage() {
             <option key={key} value={key}>{val.label}</option>
           ))}
         </select>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted whitespace-nowrap">From</label>
+          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }}
+            className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:border-accent bg-white" />
+          <label className="text-xs text-muted whitespace-nowrap">To</label>
+          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }}
+            className="px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:border-accent bg-white" />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
@@ -87,7 +120,7 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="p-4 text-muted">{order.items.length}</td>
                       <td className="p-4 font-medium">{formatPrice(order.total)}</td>
-                      <td className="p-4 text-muted">{order.paymentMethod === "cod" ? "COD" : "Bank Transfer"}</td>
+                      <td className="p-4 text-muted uppercase text-xs">{order.paymentMethod === "cod" ? "COD" : order.paymentMethod.replace(/_/g, " ")}</td>
                       <td className="p-4">
                         <span className={cn("text-xs font-medium px-2 py-1 rounded-full", statusInfo?.color)}>
                           {statusInfo?.label || order.status}

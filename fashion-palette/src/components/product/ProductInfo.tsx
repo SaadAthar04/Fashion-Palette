@@ -74,11 +74,21 @@ export default function ProductInfo({
         SKU: <span className="font-medium">{product.sku}</span>
       </p>
 
-      {/* Short Description */}
+      {/* Short Description + link to the full details tab (Feedback 08) */}
       {product.shortDescription && (
-        <p className="text-[13px] text-muted leading-[1.8] font-light">
-          {product.shortDescription}
-        </p>
+        <div>
+          <p className="text-[13px] text-muted leading-[1.8] font-light">
+            {product.shortDescription}
+          </p>
+          {product.description && product.description.trim() !== product.shortDescription.trim() && (
+            <a
+              href="#product-details"
+              className="inline-block mt-2 text-[12px] font-medium text-accent hover:underline"
+            >
+              Read full description ↓
+            </a>
+          )}
+        </div>
       )}
 
       {/* Fabric & Occasion */}

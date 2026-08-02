@@ -197,7 +197,7 @@ export default function ProductDetailClient({
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-16 md:mt-20">
+        <div id="product-details" className="mt-16 md:mt-20 scroll-mt-24">
           <div className="flex border-b border-border/50">
             {tabs.map((tab) => (
               <button

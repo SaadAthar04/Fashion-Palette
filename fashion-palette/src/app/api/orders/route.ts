@@ -12,7 +12,7 @@ import {
   users,
   coupons,
 } from "@/lib/db/schema";
-import { eq, and, or, like, desc, count, inArray, sql } from "drizzle-orm";
+import { eq, and, or, like, desc, count, inArray, sql, gte, lte } from "drizzle-orm";
 import { checkoutSchema } from "@/lib/validators";
 import { generateOrderNumber } from "@/lib/utils";
 import { FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_CHARGES } from "@/lib/constants";
@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const search = searchParams.get("q")?.trim();
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+  const format = searchParams.get("format");
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const offset = (page - 1) * limit;
@@ -44,6 +47,9 @@ export async function GET(request: NextRequest) {
   if (status && status !== "all") {
     conditions.push(eq(orders.status, status as typeof orders.status.enumValues[number]));
   }
+  // Feedback 19: date-range filter.
+  if (from) conditions.push(gte(orders.createdAt, new Date(from)));
+  if (to) conditions.push(lte(orders.createdAt, new Date(`${to}T23:59:59`)));
 
   // Feedback 19: staff can search by order number, customer, phone, payment ref.
   if (search) {
@@ -67,6 +73,44 @@ export async function GET(request: NextRequest) {
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Feedback 19: CSV export of the current (filtered) result set, staff only.
+  if (isStaff && format === "csv") {
+    const rows = await db.query.orders.findMany({
+      where,
+      with: { user: true, items: true },
+      orderBy: () => [desc(orders.createdAt)],
+    });
+    const cell = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ["Order", "Customer", "Email", "Phone", "Items", "Subtotal", "Delivery", "Total", "Payment", "Payment Status", "Status", "Date"];
+    const lines = rows.map((o) => {
+      const addr = o.shippingAddressJson as { fullName?: string; phone?: string } | null;
+      return [
+        o.orderNumber,
+        o.user?.name || addr?.fullName || "Guest",
+        o.user?.email || o.guestEmail || "",
+        addr?.phone || o.guestPhone || "",
+        o.items.length,
+        o.subtotal,
+        o.deliveryCharges,
+        o.total,
+        o.paymentMethod,
+        o.paymentStatus,
+        o.status,
+        new Date(o.createdAt).toISOString(),
+      ].map(cell).join(",");
+    });
+    const csv = [header.join(","), ...lines].join("\n");
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="orders-${new Date().toISOString().slice(0, 10)}.csv"`,
+      },
+    });
+  }
 
   const [items, [{ total }]] = await Promise.all([
     db.query.orders.findMany({
