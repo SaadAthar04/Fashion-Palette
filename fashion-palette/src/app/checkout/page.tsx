@@ -64,7 +64,9 @@ export default function CheckoutPage() {
           <div className="flex justify-between text-sm"><span className="text-muted">Payment</span><span>Cash on Delivery</span></div>
         </div>
         <p className="text-[13px] text-muted mt-6">
-          We&apos;ll send a confirmation to {formData.email}. You can track this order in your account.
+          We&apos;ve emailed an acknowledgement to {formData.email}. This confirms we received your
+          request — we&apos;ll send a second email once your order is accepted and under process. You
+          can cancel from your orders until then.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-8">
           <Link href="/account/orders"><Button>View My Orders</Button></Link>

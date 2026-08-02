@@ -39,19 +39,21 @@ export function orderReceivedEmail(o: OrderEmailData) {
   return {
     subject: `Order ${o.orderNumber} received — Fashion Palette`,
     html: layout(
-      "Thank you for your order",
-      `<p style="font-size:14px;color:#66636b;">Hi ${o.customerName || "there"}, we&rsquo;ve received your order <strong>${o.orderNumber}</strong> and it&rsquo;s now being processed.</p>
+      "We&rsquo;ve received your order request",
+      `<p style="font-size:14px;color:#66636b;">Hi ${o.customerName || "there"}, thank you — we&rsquo;ve received your order request <strong>${o.orderNumber}</strong>.</p>
+       <p style="font-size:13px;color:#66636b;">This message only confirms that we received your request. It does <strong>not</strong> mean the order is accepted yet. We&rsquo;ll check stock and send a second email confirming your order is accepted and under process.</p>
        <table style="width:100%;border-collapse:collapse;margin:16px 0;">${rows}
          <tr><td style="padding-top:12px;border-top:1px solid #e7e2ec;font-weight:700;">Total</td><td style="padding-top:12px;border-top:1px solid #e7e2ec;text-align:right;font-weight:700;">Rs ${o.total}</td></tr>
        </table>
        <p style="font-size:13px;color:#66636b;">Payment: ${o.paymentMethod === "cod" ? "Cash on Delivery" : "Bank Transfer"}</p>
-       <p style="margin-top:20px;">${btn(`${SITE}/account/orders`, "Track your order")}</p>`
+       <p style="font-size:13px;color:#66636b;">Need to cancel? You can cancel from <a href="${SITE}/account/orders" style="color:${ACCENT};">your orders</a> or by emailing <a href="mailto:orders@fashionpalette.pk" style="color:${ACCENT};">orders@fashionpalette.pk</a> before the confirmation email is sent.</p>
+       <p style="margin-top:20px;">${btn(`${SITE}/account/orders`, "View your order")}</p>`
     ),
   };
 }
 
 const STATUS_COPY: Record<string, { title: string; body: string }> = {
-  confirmed: { title: "Your order is confirmed", body: "We&rsquo;ve confirmed your order and it&rsquo;s being prepared." },
+  confirmed: { title: "Your order is accepted and under process", body: "Good news — we&rsquo;ve checked stock and <strong>accepted</strong> your order. It&rsquo;s now under process. As fulfilment has begun it can no longer be cancelled, but your rights for a faulty, wrong, damaged, or misdescribed item still apply." },
   processing: { title: "Your order is being processed", body: "Your order is being packed with care." },
   shipped: { title: "Your order has shipped", body: "Your order is on its way to you." },
   delivered: { title: "Your order was delivered", body: "We hope you love it! Thank you for shopping with us." },
