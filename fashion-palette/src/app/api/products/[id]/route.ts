@@ -37,13 +37,27 @@ export async function PUT(
     const body = await request.json();
     const data = productSchema.parse(body);
 
+    // Feedback 16: record which important fields changed (old → new).
+    const before = await db.query.products.findFirst({ where: eq(products.id, productId) });
+    const TRACKED = ["name", "basePrice", "salePrice", "stockQuantity", "publishStatus", "isActive", "categoryId", "brandId"] as const;
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    if (before) {
+      for (const k of TRACKED) {
+        const oldV = (before as Record<string, unknown>)[k];
+        const newV = (data as Record<string, unknown>)[k];
+        if (newV !== undefined && String(oldV) !== String(newV)) {
+          changes[k] = { from: oldV, to: newV };
+        }
+      }
+    }
+
     await db.update(products).set(data).where(eq(products.id, productId));
     await db.insert(auditLog).values({
       actorUserId: parseInt(auth.session.user.id),
       action: "product.update",
       entityType: "product",
       entityId: String(productId),
-      meta: { publishStatus: data.publishStatus },
+      meta: { changes, publishStatus: data.publishStatus },
     });
 
     // Update images if provided

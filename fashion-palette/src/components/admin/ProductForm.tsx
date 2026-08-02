@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { X, Plus, Upload } from "lucide-react";
+import { X, Plus, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { slugify } from "@/lib/utils";
@@ -127,6 +127,21 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
 
   const setPrimaryImage = (index: number) => {
     setImages((prev) => prev.map((img, i) => ({ ...img, isPrimary: i === index })));
+  };
+
+  // Feedback 15: reorder gallery + per-image alt text.
+  const moveImage = (index: number, dir: -1 | 1) => {
+    setImages((prev) => {
+      const to = index + dir;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+  };
+
+  const updateImageAlt = (index: number, altText: string) => {
+    setImages((prev) => prev.map((img, i) => (i === index ? { ...img, altText } : img)));
   };
 
   const addVariant = () => {
@@ -260,19 +275,30 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
 
           {/* Images */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold">Images</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Images</h3>
+              <span className="text-xs text-muted">First = order shown. Add alt text for accessibility &amp; SEO.</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {images.map((img, i) => (
-                <div key={i} className="relative group border border-border rounded-lg overflow-hidden aspect-[3/4]">
-                  <img src={img.imageUrl} alt={img.altText} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button type="button" onClick={() => setPrimaryImage(i)} className={`text-xs px-2 py-1 rounded ${img.isPrimary ? "bg-accent text-white" : "bg-white text-primary"}`}>
-                      {img.isPrimary ? "Primary" : "Set Primary"}
-                    </button>
-                    <button type="button" onClick={() => removeImage(i)} className="p-1 bg-red-500 text-white rounded">
-                      <X className="w-3 h-3" />
-                    </button>
+                <div key={i} className="border border-border rounded-lg overflow-hidden">
+                  <div className="relative group aspect-[3/4]">
+                    <img src={img.imageUrl} alt={img.altText} className="w-full h-full object-cover" />
+                    {img.isPrimary && <span className="absolute top-1.5 left-1.5 text-[10px] bg-accent text-white px-1.5 py-0.5 rounded">Primary</span>}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                      <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} className="p-1 bg-white text-primary rounded disabled:opacity-30" aria-label="Move left"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                      {!img.isPrimary && <button type="button" onClick={() => setPrimaryImage(i)} className="text-[10px] px-2 py-1 rounded bg-white text-primary">Primary</button>}
+                      <button type="button" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1} className="p-1 bg-white text-primary rounded disabled:opacity-30" aria-label="Move right"><ChevronRight className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => removeImage(i)} className="p-1 bg-red-500 text-white rounded" aria-label="Remove"><X className="w-3 h-3" /></button>
+                    </div>
                   </div>
+                  <input
+                    type="text"
+                    value={img.altText}
+                    onChange={(e) => updateImageAlt(i, e.target.value)}
+                    placeholder="Alt text"
+                    className="w-full px-2 py-1.5 text-[11px] border-t border-border focus:outline-none focus:bg-surface"
+                  />
                 </div>
               ))}
               <label className="border-2 border-dashed border-border rounded-lg aspect-[3/4] flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">

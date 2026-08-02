@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import ProductForm from "@/components/admin/ProductForm";
+import ProductHistory from "@/components/admin/ProductHistory";
 
 export default function EditProductPage() {
   const params = useParams();
@@ -67,6 +68,9 @@ export default function EditProductPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Edit Product</h1>
       <ProductForm initialData={initialData} productId={parseInt(id)} />
+      <div className="mt-6 max-w-2xl">
+        <ProductHistory productId={parseInt(id)} />
+      </div>
     </div>
   );
 }

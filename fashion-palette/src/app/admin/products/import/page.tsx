@@ -7,30 +7,43 @@ import Button from "@/components/ui/Button";
 
 const SAMPLE_HEADERS = "name,sku,brandSlug,categorySlug,basePrice,salePrice,stitchType,workType,pieceCount,fabric,color,season,sourceUrl,stockQuantity,shortDescription,description,imageUrl";
 
+const SAMPLE_ROW = "Maria B Lawn Suit,FP-MB-001,maria-b,unstitched,8500,,unstitched,print,3-piece,Lawn,Teal,Summer 2026,,20,Printed lawn suit,Full description here,/images/products/maria-b/x.webp";
+
 export default function ImportProductsPage() {
   const [csv, setCsv] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const [loading, setLoading] = useState<false | "preview" | "import">(false);
+  const [result, setResult] = useState<{ dryRun?: boolean; created: number; skipped: number; errors: string[] } | null>(null);
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setCsv(await file.text());
   };
 
-  const run = async () => {
+  const downloadTemplate = () => {
+    const blob = new Blob([`${SAMPLE_HEADERS}\n${SAMPLE_ROW}\n`], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fashion-palette-product-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const run = async (dryRun: boolean) => {
     if (loading || !csv.trim()) return;
-    setLoading(true);
+    setLoading(dryRun ? "preview" : "import");
     setResult(null);
     try {
       const res = await fetch("/api/products/import-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv }),
+        body: JSON.stringify({ csv, dryRun }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Import failed");
       setResult(data);
-      toast.success(`Imported ${data.created} products (${data.skipped} skipped)`);
+      if (dryRun) toast.message(`Preview: ${data.created} would import, ${data.skipped} skipped, ${data.errors.length} error(s)`);
+      else toast.success(`Imported ${data.created} products (${data.skipped} skipped)`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
     } finally {
@@ -50,7 +63,10 @@ export default function ImportProductsPage() {
           Imported products are created as <strong>Draft</strong> and stay hidden until you publish them.
           Duplicates (matching SKU or slug) are skipped. Required columns: <code>name, sku, brandSlug, categorySlug, basePrice</code>.
         </p>
-        <div className="bg-surface p-3 text-[11px] font-mono overflow-x-auto rounded">{SAMPLE_HEADERS}</div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="bg-surface p-3 text-[11px] font-mono overflow-x-auto rounded flex-1 min-w-[240px]">{SAMPLE_HEADERS}</div>
+          <Button variant="outline" size="sm" onClick={downloadTemplate}>Download template</Button>
+        </div>
 
         <div>
           <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] mb-2">Upload CSV file</label>
@@ -68,11 +84,19 @@ export default function ImportProductsPage() {
           />
         </div>
 
-        <Button onClick={run} isLoading={loading} disabled={!csv.trim() || loading}>Import</Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => run(true)} isLoading={loading === "preview"} disabled={!csv.trim() || !!loading}>
+            Preview (dry run)
+          </Button>
+          <Button onClick={() => run(false)} isLoading={loading === "import"} disabled={!csv.trim() || !!loading}>
+            Import
+          </Button>
+        </div>
 
         {result && (
           <div className="border-t border-border pt-4 text-sm space-y-2">
-            <p><strong className="text-success">{result.created}</strong> created · <strong>{result.skipped}</strong> skipped (duplicates)</p>
+            {result.dryRun && <p className="text-[12px] font-medium text-accent">Preview only — nothing was imported yet.</p>}
+            <p><strong className="text-success">{result.created}</strong> {result.dryRun ? "would import" : "created"} · <strong>{result.skipped}</strong> skipped (duplicates)</p>
             {result.errors.length > 0 && (
               <div>
                 <p className="text-sale font-medium">{result.errors.length} row error(s):</p>

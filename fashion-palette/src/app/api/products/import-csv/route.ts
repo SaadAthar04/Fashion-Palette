@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (auth.error) return auth.error;
 
   try {
-    const { csv } = await req.json();
+    const { csv, dryRun } = await req.json();
     if (typeof csv !== "string" || !csv.trim()) {
       return NextResponse.json({ error: "No CSV content provided." }, { status: 400 });
     }
@@ -78,6 +78,9 @@ export async function POST(req: NextRequest) {
       const [dupSku] = await db.select({ id: products.id }).from(products).where(eq(products.sku, sku)).limit(1);
       if (dupSlug || dupSku) { skipped++; continue; }
 
+      // Dry-run: validate only, never write (Feedback 17 preview).
+      if (dryRun) { created++; continue; }
+
       const stitchType = STITCH.includes(r.stitchType) ? (r.stitchType as "stitched" | "unstitched") : null;
       const workType = WORK.includes(r.workType) ? (r.workType as "print" | "embroidered" | "plain" | "mixed") : null;
       const pieceCount = PIECES.includes(r.pieceCount) ? (r.pieceCount as "1-piece" | "2-piece" | "3-piece") : null;
@@ -110,14 +113,16 @@ export async function POST(req: NextRequest) {
       created++;
     }
 
-    await db.insert(auditLog).values({
-      actorUserId: parseInt(auth.session.user.id),
-      action: "product.csv_import",
-      entityType: "product",
-      meta: { created, skipped, errorCount: errors.length },
-    });
+    if (!dryRun) {
+      await db.insert(auditLog).values({
+        actorUserId: parseInt(auth.session.user.id),
+        action: "product.csv_import",
+        entityType: "product",
+        meta: { created, skipped, errorCount: errors.length },
+      });
+    }
 
-    return NextResponse.json({ ok: true, created, skipped, errors: errors.slice(0, 50) });
+    return NextResponse.json({ ok: true, dryRun: !!dryRun, created, skipped, errors: errors.slice(0, 50) });
   } catch (error) {
     console.error("CSV import error:", error);
     return NextResponse.json({ error: "Import failed." }, { status: 500 });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Tag, Image, Users, BarChart3, Settings, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Layers, Tag, Ticket, Star, Image, Users, BarChart3, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,10 @@ const sidebarLinks = [
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders", roles: ["admin", "order_manager"] },
   { icon: RotateCcw, label: "Returns", href: "/admin/returns", roles: ["admin", "order_manager"] },
   { icon: FolderTree, label: "Categories", href: "/admin/categories", roles: ["admin", "catalogue_editor"] },
+  { icon: Layers, label: "Collections", href: "/admin/collections", roles: ["admin", "catalogue_editor"] },
   { icon: Tag, label: "Brands", href: "/admin/brands", roles: ["admin", "catalogue_editor"] },
+  { icon: Ticket, label: "Coupons", href: "/admin/coupons", roles: ["admin"] },
+  { icon: Star, label: "Reviews", href: "/admin/reviews", roles: ["admin", "catalogue_editor"] },
   { icon: Image, label: "Banners", href: "/admin/banners", roles: ["admin", "catalogue_editor"] },
   { icon: BarChart3, label: "Reports", href: "/admin/reports", roles: ["admin", "order_manager"] },
   { icon: Users, label: "Users", href: "/admin/users", roles: ["admin"] },
