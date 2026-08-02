@@ -28,7 +28,7 @@ mkdir -p "$DEST"
 echo "[$(date)] Backing up to $DEST"
 
 # 1) Database (gzipped SQL dump)
-mysqldump --single-transaction --quick \
+mysqldump --single-transaction --quick --no-tablespaces \
   -h "${DATABASE_HOST:-127.0.0.1}" -P "${DATABASE_PORT:-3306}" \
   -u "${DATABASE_USER}" -p"${DATABASE_PASSWORD}" "${DATABASE_NAME}" \
   | gzip > "$DEST/db-$STAMP.sql.gz"
