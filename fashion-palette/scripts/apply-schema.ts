@@ -47,6 +47,32 @@ async function main() {
     console.log("• users.is_active already present");
   }
 
+  // Feedback 24: settings key-value store.
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS \`site_settings\` (
+      \`key\` varchar(80) NOT NULL,
+      \`value\` text NOT NULL,
+      \`updated_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (\`key\`)
+    )`
+  );
+  console.log("✓ site_settings table ensured");
+
+  // Feedback 12: per-product low-stock threshold.
+  if (!(await columnExists("products", "low_stock_threshold"))) {
+    await pool.query("ALTER TABLE `products` ADD `low_stock_threshold` int NOT NULL DEFAULT 3");
+    console.log("✓ products.low_stock_threshold added");
+  } else {
+    console.log("• products.low_stock_threshold already present");
+  }
+
+  // Feedback 11: expand publish_status enum to include hidden + archived.
+  // MODIFY is idempotent (safe to re-run with the same definition).
+  await pool.query(
+    "ALTER TABLE `products` MODIFY `publish_status` enum('draft','published','hidden','archived') NOT NULL DEFAULT 'draft'"
+  );
+  console.log("✓ products.publish_status enum ensured");
+
   await pool.end();
   console.log("✅ apply-schema complete");
   process.exit(0);

@@ -287,3 +287,18 @@ img {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Print: show only the invoice sheet, hide app chrome (Feedback 19) */
+@media print {
+  .no-print,
+  [data-admin-chrome] {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .invoice-sheet {
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

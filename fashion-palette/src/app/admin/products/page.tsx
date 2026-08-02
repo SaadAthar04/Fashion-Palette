@@ -127,10 +127,12 @@ export default function AdminProductsPage() {
                 products.map((product: Record<string, unknown>) => {
                   const p = product as { id: number; name: string; sku: string; basePrice: string; salePrice: string | null; stockQuantity: number; isActive: boolean; publishStatus?: string; brand?: { name: string }; images?: { imageUrl: string }[] };
                   // Effective public visibility (Feedback 11): one clear status.
-                  const visibility = !p.isActive
+                  const visibility = !p.isActive || p.publishStatus === "archived"
                     ? { label: "Archived", cls: "bg-gray-200 text-gray-700" }
                     : p.publishStatus === "published"
                     ? { label: "Published", cls: "bg-green-100 text-green-800" }
+                    : p.publishStatus === "hidden"
+                    ? { label: "Hidden", cls: "bg-slate-100 text-slate-700" }
                     : { label: "Draft", cls: "bg-amber-100 text-amber-800" };
                   const primaryImage = p.images?.[0]?.imageUrl;
                   return (

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Tag, Image, Users, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Tag, Image, Users, BarChart3, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,9 @@ const sidebarLinks = [
   { icon: FolderTree, label: "Categories", href: "/admin/categories", roles: ["admin", "catalogue_editor"] },
   { icon: Tag, label: "Brands", href: "/admin/brands", roles: ["admin", "catalogue_editor"] },
   { icon: Image, label: "Banners", href: "/admin/banners", roles: ["admin", "catalogue_editor"] },
+  { icon: BarChart3, label: "Reports", href: "/admin/reports", roles: ["admin", "order_manager"] },
   { icon: Users, label: "Users", href: "/admin/users", roles: ["admin"] },
+  { icon: Settings, label: "Settings", href: "/admin/settings", roles: ["admin"] },
 ];
 
 export default function AdminSidebar() {
@@ -30,13 +32,13 @@ export default function AdminSidebar() {
     <>
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-2.5 left-3 z-50 lg:hidden w-9 h-9 bg-white shadow-md rounded-lg flex items-center justify-center"
+        className="fixed top-2.5 left-3 z-50 lg:hidden w-9 h-9 bg-white shadow-md rounded-lg flex items-center justify-center print:hidden"
       >
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white transform transition-transform duration-300 lg:translate-x-0 lg:static",
+        "fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white transform transition-transform duration-300 lg:translate-x-0 lg:static print:hidden",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 border-b border-white/10">

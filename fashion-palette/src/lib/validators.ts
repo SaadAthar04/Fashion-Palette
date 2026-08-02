@@ -72,8 +72,9 @@ export const productSchema = z.object({
   isBestSeller: z.boolean().default(false),
   isActive: z.boolean().default(true),
   // Feedback 22: draft vs published
-  publishStatus: z.enum(["draft", "published"]).default("draft"),
+  publishStatus: z.enum(["draft", "published", "hidden", "archived"]).default("draft"),
   stockQuantity: z.number().int().min(0).default(0),
+  lowStockThreshold: z.number().int().min(0).default(3),
   sku: z.string().min(2),
   metaTitle: emptyToNull,
   metaDescription: emptyToNull,

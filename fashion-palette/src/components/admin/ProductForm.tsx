@@ -37,6 +37,7 @@ type ProductFormData = {
   isActive: boolean;
   publishStatus: string;
   stockQuantity: number;
+  lowStockThreshold: number;
   sku: string;
   metaTitle: string;
   metaDescription: string;
@@ -61,7 +62,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
     season: "", color: "", careInstructions: "", sourceUrl: "",
     isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true,
     publishStatus: "draft",
-    stockQuantity: 0, sku: "",
+    stockQuantity: 0, lowStockThreshold: 3, sku: "",
     metaTitle: "", metaDescription: "",
   };
   // Merge so edit-mode products missing newer fields still get safe defaults,
@@ -150,6 +151,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
         brandId: Number(form.brandId),
         categoryId: Number(form.categoryId),
         stockQuantity: Number(form.stockQuantity),
+        lowStockThreshold: Number(form.lowStockThreshold),
         salePrice: form.salePrice || null,
         // enum fields must be a valid value or null (never "")
         stitchType: form.stitchType || null,
@@ -207,7 +209,10 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
               <Input label="Base Price (Rs.)" id="basePrice" value={form.basePrice} onChange={(e) => updateField("basePrice", e.target.value)} required />
               <Input label="Sale Price (Rs.)" id="salePrice" value={form.salePrice} onChange={(e) => updateField("salePrice", e.target.value)} placeholder="Leave empty if no sale" />
             </div>
-            <Input label="Stock Quantity" id="stockQuantity" type="number" value={String(form.stockQuantity)} onChange={(e) => updateField("stockQuantity", parseInt(e.target.value) || 0)} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input label="Stock Quantity" id="stockQuantity" type="number" value={String(form.stockQuantity)} onChange={(e) => updateField("stockQuantity", parseInt(e.target.value) || 0)} />
+              <Input label="Low-stock alert at" id="lowStockThreshold" type="number" value={String(form.lowStockThreshold)} onChange={(e) => updateField("lowStockThreshold", parseInt(e.target.value) || 0)} placeholder="e.g. 3" />
+            </div>
           </div>
 
           {/* Fashion details (Feedback 09) */}
@@ -363,13 +368,16 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
           {/* Toggles */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-3">
             <h3 className="font-semibold">Visibility</h3>
-            {/* Feedback 22: draft products stay hidden from the storefront */}
+            {/* Feedback 11: clear visibility states — only Published is public */}
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Publish Status</label>
               <select value={form.publishStatus} onChange={(e) => updateField("publishStatus", e.target.value)} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
-                <option value="draft">Draft (hidden)</option>
-                <option value="published">Published (live)</option>
+                <option value="draft">Draft — not finished, hidden</option>
+                <option value="published">Published — live &amp; public</option>
+                <option value="hidden">Hidden — temporarily off-sale</option>
+                <option value="archived">Archived — retired</option>
               </select>
+              <p className="text-[11px] text-muted mt-1.5">Only <strong>Published</strong> products appear on the storefront.</p>
             </div>
             {[
               { key: "isActive", label: "Active" },

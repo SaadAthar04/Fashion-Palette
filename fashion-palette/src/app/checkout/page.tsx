@@ -12,7 +12,8 @@ import Select from "@/components/ui/Select";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice, getImageUrl } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_CHARGES, PROVINCES, CITIES } from "@/lib/constants";
+import { PROVINCES, CITIES } from "@/lib/constants";
+import { useDeliveryConfig } from "@/hooks/useDeliveryConfig";
 import { toast } from "sonner";
 
 const steps = ["Shipping", "Payment", "Review"];
@@ -20,6 +21,7 @@ const steps = ["Shipping", "Payment", "Review"];
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getSubtotal, clearCart } = useCart();
+  const { deliveryCharge, freeThreshold } = useDeliveryConfig();
   const [mounted, setMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,7 +79,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = getSubtotal();
-  const deliveryCharges = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_CHARGES;
+  const deliveryCharges = subtotal >= freeThreshold ? 0 : deliveryCharge;
   const total = subtotal + deliveryCharges;
 
   if (items.length === 0) {

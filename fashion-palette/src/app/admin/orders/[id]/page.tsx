@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { db } from "@/lib/db";
 import { orders, orderStatusHistory } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -43,6 +43,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <span className={cn("text-xs font-medium px-3 py-1.5 rounded-full ml-auto", statusInfo?.color)}>
           {statusInfo?.label || order.status}
         </span>
+        <Link
+          href={`/admin/orders/${order.id}/invoice`}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-surface transition-colors"
+        >
+          <Printer className="w-4 h-4" />
+          <span className="hidden sm:inline">Invoice</span>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

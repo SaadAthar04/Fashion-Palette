@@ -8,10 +8,11 @@ import Breadcrumb from "@/components/ui/Breadcrumb";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/hooks/useCart";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
-import { FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_CHARGES } from "@/lib/constants";
+import { useDeliveryConfig } from "@/hooks/useDeliveryConfig";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getSubtotal, clearCart } = useCart();
+  const { deliveryCharge, freeThreshold } = useDeliveryConfig();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -27,9 +28,9 @@ export default function CartPage() {
   }
 
   const subtotal = getSubtotal();
-  const deliveryCharges = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_CHARGES;
+  const deliveryCharges = subtotal >= freeThreshold ? 0 : deliveryCharge;
   const total = subtotal + deliveryCharges;
-  const remaining = FREE_DELIVERY_THRESHOLD - subtotal;
+  const remaining = freeThreshold - subtotal;
 
   if (items.length === 0) {
     return (
@@ -85,7 +86,7 @@ export default function CartPage() {
             <div
               className="h-full bg-accent rounded-full transition-all duration-500"
               style={{
-                width: `${Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100)}%`,
+                width: `${Math.min((subtotal / freeThreshold) * 100, 100)}%`,
               }}
             />
           </div>
@@ -380,7 +381,7 @@ export default function CartPage() {
               <div className="flex items-center gap-2 text-xs text-muted">
                 <Truck className="w-4 h-4 text-accent flex-shrink-0" />
                 <span>
-                  Free delivery on orders above {formatPrice(FREE_DELIVERY_THRESHOLD)}
+                  Free delivery on orders above {formatPrice(freeThreshold)}
                 </span>
               </div>
             </div>

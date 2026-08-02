@@ -55,6 +55,7 @@ export default function EditProductPage() {
     isBestSeller: product.isBestSeller,
     isActive: product.isActive,
     stockQuantity: product.stockQuantity,
+    lowStockThreshold: product.lowStockThreshold ?? 3,
     sku: product.sku,
     metaTitle: product.metaTitle || "",
     metaDescription: product.metaDescription || "",

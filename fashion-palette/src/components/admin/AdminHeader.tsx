@@ -12,7 +12,7 @@ export default function AdminHeader() {
   const role = user?.role?.replace(/_/g, " ");
 
   return (
-    <header className="h-14 flex items-center justify-between gap-4 px-4 md:px-6 bg-white border-b border-border sticky top-0 z-30">
+    <header className="h-14 flex items-center justify-between gap-4 px-4 md:px-6 bg-white border-b border-border sticky top-0 z-30 print:hidden">
       {/* leave room for the mobile sidebar toggle on small screens */}
       <span className="text-sm font-semibold pl-12 lg:pl-0">Admin Panel</span>
 

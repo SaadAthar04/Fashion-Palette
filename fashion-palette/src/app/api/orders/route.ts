@@ -15,7 +15,7 @@ import {
 import { eq, and, or, like, desc, count, inArray, sql, gte, lte } from "drizzle-orm";
 import { checkoutSchema } from "@/lib/validators";
 import { generateOrderNumber } from "@/lib/utils";
-import { FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_CHARGES } from "@/lib/constants";
+import { getDeliveryConfig } from "@/lib/settings";
 import { sendEmail } from "@/lib/email/mailer";
 import { orderReceivedEmail, adminNewOrderEmail } from "@/lib/email/templates";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
@@ -257,9 +257,11 @@ export async function POST(request: Request) {
       couponCode = coupon.code;
     }
 
-    // Feedback 16: Rs 500 flat delivery; free above Rs 10,000 (on discounted subtotal).
+    // Feedback 16/24: flat delivery, free above threshold — read from settings
+    // so the owner can change it; server stays authoritative.
     const netSubtotal = subtotal - discount;
-    const deliveryCharges = netSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_CHARGES;
+    const { deliveryCharge, freeThreshold } = await getDeliveryConfig();
+    const deliveryCharges = netSubtotal >= freeThreshold ? 0 : deliveryCharge;
     const total = netSubtotal + deliveryCharges;
     const orderNumber = generateOrderNumber();
 

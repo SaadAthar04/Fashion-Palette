@@ -92,9 +92,12 @@ export const products = mysqlTable("products", {
   isNewArrival: boolean("is_new_arrival").notNull().default(false),
   isBestSeller: boolean("is_best_seller").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
-  // Feedback 22: draft vs published so incomplete products stay hidden
-  publishStatus: mysqlEnum("publish_status", ["draft", "published"]).notNull().default("draft"),
+  // Feedback 11: clear visibility states. Only "published" is public. Hidden =
+  // temporarily off-sale; archived = retired (kept for order history).
+  publishStatus: mysqlEnum("publish_status", ["draft", "published", "hidden", "archived"]).notNull().default("draft"),
   stockQuantity: int("stock_quantity").notNull().default(0),
+  // Feedback 12: per-product low-stock threshold for admin/report alerts.
+  lowStockThreshold: int("low_stock_threshold").notNull().default(3),
   // ── SEO (Feedback 09 / 30) ──
   metaTitle: varchar("meta_title", { length: 255 }),
   metaDescription: varchar("meta_description", { length: 500 }),
@@ -500,6 +503,15 @@ export const returnsRelations = relations(returns, ({ one }) => ({
   user: one(users, { fields: [returns.userId], references: [users.id] }),
   handledBy: one(users, { fields: [returns.handledByUserId], references: [users.id] }),
 }));
+
+// ─── SITE SETTINGS (Feedback 24) ────────────────────────
+// Key-value store for owner-editable business rules (delivery charge, free
+// threshold, active payment methods, low-stock default). Never store secrets.
+export const siteSettings = mysqlTable("site_settings", {
+  key: varchar({ length: 80 }).primaryKey(),
+  value: text().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
 
 // ─── EMAIL LOG (Feedback 20) ────────────────────────────
 // Admin-visible log of sent/failed/retried messages. Never store secrets here.
