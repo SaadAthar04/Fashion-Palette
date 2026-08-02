@@ -72,7 +72,7 @@ export default function AdminEmailsPage() {
             type="email"
             value={testTo}
             onChange={(e) => setTestTo(e.target.value)}
-            placeholder="you@example.com (defaults to your email)"
+            placeholder="you@example.com (defaults to info@fashionpalette.pk)"
             className="flex-1 sm:w-72 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
           />
           <Button size="sm" onClick={sendTest} isLoading={testing}>Send test</Button>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
-import { sendEmail } from "@/lib/email/mailer";
+import { sendEmail, ADMIN_NOTIFY } from "@/lib/email/mailer";
 
 // Feedback 31: one-click SMTP verification from the admin Email Log.
 export async function POST(req: NextRequest) {
@@ -8,7 +8,9 @@ export async function POST(req: NextRequest) {
   if (auth.error) return auth.error;
 
   const body = await req.json().catch(() => ({}));
-  const to = typeof body.to === "string" && body.to.includes("@") ? body.to.trim() : auth.session.user.email;
+  // Default to the monitored notification inbox (info@), NOT the logged-in
+  // account's login email — which may be a non-receiving identity.
+  const to = typeof body.to === "string" && body.to.includes("@") ? body.to.trim() : ADMIN_NOTIFY;
 
   const sent = await sendEmail({
     to,
