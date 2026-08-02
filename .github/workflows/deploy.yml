@@ -47,12 +47,16 @@ jobs:
             npm ci
             echo "==> Rebuild native modules (sharp/esbuild)"
             npm rebuild sharp esbuild --foreground-scripts
-            echo "==> Sync database schema to the live DB (pre-launch: push --force)"
-            # Runs on the VPS where MySQL 127.0.0.1:3306 is reachable. drizzle-kit
-            # reads the app-folder .env for DB credentials. NOTE (pre-launch only):
-            # --force auto-approves data-loss statements. Switch to gated
-            # `drizzle-kit migrate` before real customer data exists (Feedback 32).
-            npx drizzle-kit push --force
+            echo "==> Apply known additive schema (idempotent, non-interactive)"
+            # drizzle-kit push prompts on some changes (e.g. adding a NOT NULL
+            # column) and there is no TTY over SSH, so it hangs/fails. This step
+            # applies known new tables/columns deterministically first.
+            npm run db:apply-schema
+            echo "==> drizzle push (best-effort drift sync; non-fatal)"
+            # After apply-schema there should be no diff. Kept as a safety net but
+            # non-fatal + stdin closed so an interactive prompt cannot block deploy.
+            # Switch to gated `drizzle-kit migrate` before real customer data (F32).
+            npx drizzle-kit push --force < /dev/null || echo "  (drizzle push skipped — non-fatal)"
             echo "==> Build"
             npm run build
             echo "==> Restart"
