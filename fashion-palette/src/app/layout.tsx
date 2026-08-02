@@ -7,6 +7,7 @@ import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
+import StorefrontChrome from "@/components/layout/StorefrontChrome";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import { db } from "@/lib/db";
 import { brands } from "@/lib/db/schema";
@@ -75,11 +76,14 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col antialiased">
         <Providers>
-          <TopBar />
-          <Header brands={menuBrands} />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <WhatsAppButton />
+          <StorefrontChrome
+            topBar={<TopBar />}
+            header={<Header brands={menuBrands} />}
+            footer={<Footer />}
+            whatsapp={<WhatsAppButton />}
+          >
+            {children}
+          </StorefrontChrome>
           <Toaster position="top-right" richColors />
         </Providers>
       </body>

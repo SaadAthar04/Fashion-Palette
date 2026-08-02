@@ -24,13 +24,13 @@ export default function AdminSidebar() {
     <>
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-20 left-4 z-50 lg:hidden w-10 h-10 bg-white shadow-md rounded-lg flex items-center justify-center"
+        className="fixed top-2.5 left-3 z-50 lg:hidden w-9 h-9 bg-white shadow-md rounded-lg flex items-center justify-center"
       >
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white transform transition-transform duration-300 lg:translate-x-0 lg:static pt-20 lg:pt-0",
+        "fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white transform transition-transform duration-300 lg:translate-x-0 lg:static",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 border-b border-white/10">
