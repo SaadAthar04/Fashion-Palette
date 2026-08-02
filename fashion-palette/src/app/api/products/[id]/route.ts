@@ -4,6 +4,7 @@ import { products, productImages, productVariants, auditLog } from "@/lib/db/sch
 import { eq } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
+import { revalidateCatalog } from "@/lib/revalidate";
 
 export async function GET(
   _request: NextRequest,
@@ -84,6 +85,7 @@ export async function PUT(
       with: { brand: true, category: true, images: true, variants: true },
     });
 
+    revalidateCatalog(); // reflect visibility/price/stock changes immediately (Feedback 01)
     return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
@@ -112,5 +114,6 @@ export async function DELETE(
     entityId: String(productId),
   });
 
+  revalidateCatalog();
   return NextResponse.json({ success: true });
 }

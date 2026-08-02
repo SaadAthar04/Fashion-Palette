@@ -125,7 +125,13 @@ export default function AdminProductsPage() {
                 <tr><td colSpan={7} className="p-8 text-center text-muted">No products found</td></tr>
               ) : (
                 products.map((product: Record<string, unknown>) => {
-                  const p = product as { id: number; name: string; sku: string; basePrice: string; salePrice: string | null; stockQuantity: number; isActive: boolean; brand?: { name: string }; images?: { imageUrl: string }[] };
+                  const p = product as { id: number; name: string; sku: string; basePrice: string; salePrice: string | null; stockQuantity: number; isActive: boolean; publishStatus?: string; brand?: { name: string }; images?: { imageUrl: string }[] };
+                  // Effective public visibility (Feedback 11): one clear status.
+                  const visibility = !p.isActive
+                    ? { label: "Archived", cls: "bg-gray-200 text-gray-700" }
+                    : p.publishStatus === "published"
+                    ? { label: "Published", cls: "bg-green-100 text-green-800" }
+                    : { label: "Draft", cls: "bg-amber-100 text-amber-800" };
                   const primaryImage = p.images?.[0]?.imageUrl;
                   return (
                     <tr key={p.id} className="hover:bg-surface/50">
@@ -151,8 +157,8 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="p-4">{p.stockQuantity}</td>
                       <td className="p-4">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${p.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                          {p.isActive ? "Active" : "Inactive"}
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${visibility.cls}`}>
+                          {visibility.label}
                         </span>
                       </td>
                       <td className="p-4">

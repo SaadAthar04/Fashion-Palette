@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { products, auditLog } from "@/lib/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
+import { revalidateCatalog } from "@/lib/revalidate";
 
 // Feedback 22: bulk publish/unpublish. Body: { status: "published"|"draft",
 // all?: true (all drafts→published or all→draft), ids?: number[] }.
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       meta: { target, affected, all: !!body.all },
     });
 
+    revalidateCatalog();
     return NextResponse.json({ ok: true, affected, status: target });
   } catch (error) {
     console.error("Bulk publish error:", error);

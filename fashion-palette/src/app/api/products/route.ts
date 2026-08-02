@@ -6,6 +6,7 @@ import { products, productImages, productVariants, auditLog } from "@/lib/db/sch
 import { eq, and, or, like, desc, asc, sql, count } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
+import { revalidateCatalog } from "@/lib/revalidate";
 
 const STAFF_ROLES = ["admin", "catalogue_editor", "order_manager"];
 
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
       with: { brand: true, category: true, images: true, variants: true },
     });
 
+    revalidateCatalog();
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {

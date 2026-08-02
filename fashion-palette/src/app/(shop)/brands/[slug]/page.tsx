@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { brands, products } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
-import ProductGrid from "@/components/product/ProductGrid";
+import CategoryPageClient from "@/app/(shop)/categories/[slug]/CategoryPageClient";
 
 export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
@@ -58,42 +58,32 @@ export default async function BrandPage({ params }: Props) {
     notFound();
   }
 
-  return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
-      <Breadcrumb
-        items={[
-          { label: "Brands", href: "/brands" },
-          { label: data.brand.name },
-        ]}
-        className="mb-6"
-      />
-
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-light tracking-tight">
-          {data.brand.name}
-        </h1>
-        <div className="w-10 h-[1px] bg-accent mt-3" />
-        <p className="text-[13px] text-muted mt-3">
-          {data.products.length} {data.products.length === 1 ? "product" : "products"}
-        </p>
-      </div>
-
-      {data.products.length > 0 ? (
-        <ProductGrid products={data.products as any[]} columns={4} />
-      ) : (
+  // Empty (approved brand awaiting products) — helpful state, not a filter UI.
+  if (data.products.length === 0) {
+    return (
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
+        <Breadcrumb items={[{ label: "Brands", href: "/brands" }, { label: data.brand.name }]} className="mb-6" />
+        <h1 className="text-2xl md:text-3xl font-light tracking-tight">{data.brand.name}</h1>
+        <div className="w-10 h-[1px] bg-accent mt-3 mb-8" />
         <div className="border border-border/60 bg-surface/50 py-16 px-6 text-center">
           <p className="text-sm font-medium">New arrivals from {data.brand.name} are on their way.</p>
-          <p className="text-[13px] text-muted mt-2">
-            This collection is being added. Explore other designers in the meantime.
-          </p>
-          <Link
-            href="/brands"
-            className="inline-block mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent hover:text-accent-hover"
-          >
+          <p className="text-[13px] text-muted mt-2">This collection is being added. Explore other designers in the meantime.</p>
+          <Link href="/brands" className="inline-block mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent hover:text-accent-hover">
             Browse all brands →
           </Link>
         </div>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  // Reuse the catalogue filter/sort/Load-More client. brands=[] hides the
+  // redundant brand filter since we're already scoped to one brand.
+  return (
+    <CategoryPageClient
+      slug={slug}
+      categoryName={data.brand.name}
+      products={data.products as any[]}
+      brands={[]}
+    />
   );
 }
