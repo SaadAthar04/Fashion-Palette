@@ -8,10 +8,17 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$APP_DIR"
 
-# Load DB credentials from the app .env (DATABASE_* keys).
-set -a
-[ -f .env ] && . ./.env
-set +a
+# Read DB credentials from .env WITHOUT sourcing it — values elsewhere in .env
+# (e.g. EMAIL_FROM="… <orders@…>") contain <, >, #, spaces that break `source`.
+env_get() {
+  grep -E "^$1=" .env 2>/dev/null | head -1 | cut -d= -f2- \
+    | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+DATABASE_HOST="$(env_get DATABASE_HOST)"; DATABASE_HOST="${DATABASE_HOST:-127.0.0.1}"
+DATABASE_PORT="$(env_get DATABASE_PORT)"; DATABASE_PORT="${DATABASE_PORT:-3306}"
+DATABASE_USER="$(env_get DATABASE_USER)"
+DATABASE_PASSWORD="$(env_get DATABASE_PASSWORD)"
+DATABASE_NAME="$(env_get DATABASE_NAME)"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 DEST="${BACKUP_DIR:-$HOME/fp-backups}"
