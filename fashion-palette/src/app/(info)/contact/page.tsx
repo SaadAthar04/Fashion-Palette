@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { toast } from "sonner";
 import { getWhatsAppUrl } from "@/lib/utils";
+import { CONTACT } from "@/lib/constants";
 
 export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,11 +15,22 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate form submission
-    await new Promise((r) => setTimeout(r, 1000));
-    toast.success("Message sent! We'll get back to you within 24 hours.");
-    (e.target as HTMLFormElement).reset();
-    setIsLoading(false);
+    const form = e.target as HTMLFormElement;
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Message received. We'll reply by email or WhatsApp soon.");
+      form.reset();
+    } catch {
+      toast.error("Could not send. Please email us or message on WhatsApp instead.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,9 +49,10 @@ export default function ContactPage() {
 
           <div className="space-y-6">
             {[
-              { icon: Phone, label: "Phone / WhatsApp", value: "0327-6796087" },
-              { icon: Mail, label: "Email", value: "info@fashionpalette.pk" },
-              { icon: MapPin, label: "Address", value: "Lahore, Pakistan" },
+              { icon: Phone, label: "Phone / WhatsApp", value: CONTACT.whatsappDisplay },
+              { icon: Mail, label: "General & orders", value: `${CONTACT.emails.general} · ${CONTACT.emails.orders}` },
+              { icon: Mail, label: "Support & returns", value: CONTACT.emails.support },
+              { icon: MapPin, label: "Business location", value: CONTACT.location },
               { icon: Clock, label: "Business Hours", value: "Mon - Sat: 10 AM - 8 PM" },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-4">

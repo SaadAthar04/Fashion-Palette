@@ -57,8 +57,8 @@ export default function AboutPage() {
           <p className="text-muted leading-relaxed">
             Have questions? We&apos;re here to help! Reach us via WhatsApp at{" "}
             <strong>0327-6796087</strong> or email us at{" "}
-            <a href="mailto:info@fashionpalette.pk" className="text-accent hover:underline">
-              info@fashionpalette.pk
+            <a href="mailto:contact@fashionpalette.pk" className="text-accent hover:underline">
+              contact@fashionpalette.pk
             </a>
           </p>
         </div>

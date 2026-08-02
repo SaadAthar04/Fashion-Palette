@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { FOOTER_LINKS, SOCIAL_LINKS, SITE_NAME } from "@/lib/constants";
+import {
+  FOOTER_LINKS,
+  SOCIAL_LINKS,
+  SITE_NAME,
+  CONTACT,
+  ACTIVE_PAYMENT_METHODS,
+} from "@/lib/constants";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -50,38 +56,53 @@ export default function Footer() {
                 <span className="text-accent">Palette</span>
               </span>
             </Link>
-            <p className="text-[13px] text-white/40 leading-[1.8] mb-8">
+            <p className="text-[13px] text-white/40 leading-[1.8] mb-6">
               A multi-brand destination for women&apos;s fashion — curated
               unstitched, prints, embroidered and festive collections from
               leading Pakistani designers.
             </p>
-            <div className="flex gap-3">
-              {[
+
+            {/* Business & contact (Feedback 03) */}
+            <address className="not-italic text-[12.5px] text-white/40 leading-[1.8] mb-6 space-y-1">
+              <p>{CONTACT.location}</p>
+              <p>
+                WhatsApp:{" "}
+                <a href={`https://wa.me/923276796087`} className="hover:text-accent">
+                  {CONTACT.whatsappDisplay}
+                </a>
+              </p>
+              <p>
+                <a href={`mailto:${CONTACT.emails.support}`} className="hover:text-accent">
+                  {CONTACT.emails.support}
+                </a>
+              </p>
+            </address>
+
+            {/* Feedback 06: only render social icons that have a confirmed profile. */}
+            {(() => {
+              const socials = [
                 { href: SOCIAL_LINKS.facebook, Icon: FacebookIcon, label: "Facebook" },
                 { href: SOCIAL_LINKS.instagram, Icon: InstagramIcon, label: "Instagram" },
-                {
-                  href: SOCIAL_LINKS.tiktok,
-                  label: "TikTok",
-                  Icon: ({ className }: { className?: string }) => (
-                    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.55a8.19 8.19 0 004.76 1.52V6.69h-1z" />
-                    </svg>
-                  ),
-                },
                 { href: SOCIAL_LINKS.youtube, Icon: YoutubeIcon, label: "YouTube" },
-              ].map(({ href, Icon, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-accent hover:bg-accent/10 transition-all duration-300"
-                  aria-label={label}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </a>
-              ))}
-            </div>
+              ].filter((s) => s.href);
+              if (socials.length === 0) return null;
+              return (
+                <div className="flex gap-3">
+                  {socials.map(({ href, Icon, label }) => (
+                    <a
+                      key={label}
+                      href={href!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-accent hover:bg-accent/10 transition-all duration-300"
+                      aria-label={label}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Link Columns */}
@@ -114,16 +135,14 @@ export default function Footer() {
                 We Accept
               </span>
               <div className="flex gap-2">
-                {["COD", "Bank Transfer", "JazzCash", "EasyPaisa"].map(
-                  (method) => (
-                    <span
-                      key={method}
-                      className="px-3 py-1.5 text-[10px] tracking-wider text-white/30 border border-white/[0.08] uppercase"
-                    >
-                      {method}
-                    </span>
-                  )
-                )}
+                {ACTIVE_PAYMENT_METHODS.map((method) => (
+                  <span
+                    key={method}
+                    className="px-3 py-1.5 text-[10px] tracking-wider text-white/30 border border-white/[0.08] uppercase"
+                  >
+                    {method}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

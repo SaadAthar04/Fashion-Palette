@@ -61,7 +61,7 @@ export default function CheckoutPage() {
         <div className="bg-surface border border-border/60 mt-8 p-6 text-left space-y-2">
           <div className="flex justify-between text-sm"><span className="text-muted">Order number</span><span className="font-semibold">{placed.orderNumber}</span></div>
           <div className="flex justify-between text-sm"><span className="text-muted">Total</span><span className="font-semibold">{formatPrice(parseFloat(placed.total))}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-muted">Payment</span><span>{formData.paymentMethod === "cod" ? "Cash on Delivery" : "Bank Transfer"}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted">Payment</span><span>Cash on Delivery</span></div>
         </div>
         <p className="text-[13px] text-muted mt-6">
           We&apos;ll send a confirmation to {formData.email}. You can track this order in your account.
@@ -222,9 +222,10 @@ export default function CheckoutPage() {
           {currentStep === 1 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">Payment Method</h2>
+              {/* Feedback 03/33: only Cash on Delivery is active and tested. Other
+                  methods appear here once each is enabled and sandbox-verified. */}
               {[
-                { id: "cod", label: "Cash on Delivery (COD)", desc: "Pay when you receive your order" },
-                { id: "bank_transfer", label: "Bank Transfer", desc: "Transfer to our bank account and share receipt" },
+                { id: "cod", label: "Cash on Delivery (COD)", desc: "Pay in cash when your order is delivered" },
               ].map((method) => (
                 <label key={method.id} className={cn(
                   "flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition-colors",
@@ -237,16 +238,9 @@ export default function CheckoutPage() {
                   </div>
                 </label>
               ))}
-              {formData.paymentMethod === "bank_transfer" && (
-                <div className="bg-surface p-4 rounded-lg text-sm space-y-1">
-                  <p className="font-semibold">Bank Account Details:</p>
-                  <p className="text-muted">Bank: Meezan Bank</p>
-                  <p className="text-muted">Account Title: Fashion Palette</p>
-                  <p className="text-muted">Account No: 0123456789</p>
-                  <p className="text-muted">IBAN: PK00MEZN0000000123456789</p>
-                  <p className="text-xs text-accent mt-2">Please share the payment receipt via WhatsApp after transfer.</p>
-                </div>
-              )}
+              <p className="text-xs text-muted">
+                More payment options will be added once they are activated and tested.
+              </p>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Order Notes (Optional)</label>
                 <textarea value={formData.notes} onChange={(e) => updateField("notes", e.target.value)} rows={3} className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:border-accent resize-none" placeholder="Special instructions..." />
@@ -270,7 +264,7 @@ export default function CheckoutPage() {
                 <p className="text-sm text-muted">{formData.phone} | {formData.email}</p>
               </div>
               <div className="bg-surface p-4 rounded-lg">
-                <h3 className="font-semibold text-sm mb-2">Payment: {formData.paymentMethod === "cod" ? "Cash on Delivery" : "Bank Transfer"}</h3>
+                <h3 className="font-semibold text-sm mb-2">Payment: Cash on Delivery</h3>
               </div>
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm">Items ({items.length}):</h3>

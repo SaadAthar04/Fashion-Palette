@@ -34,6 +34,13 @@ export type Product = {
   salePrice: string | null;
   fabric: string | null;
   occasion: string | null;
+  stitchType?: string | null;
+  workType?: string | null;
+  pieceCount?: string | null;
+  season?: string | null;
+  color?: string | null;
+  careInstructions?: string | null;
+  publishStatus?: string;
   isFeatured: boolean;
   isNewArrival: boolean;
   isBestSeller: boolean;

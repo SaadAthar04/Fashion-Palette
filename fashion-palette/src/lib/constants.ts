@@ -47,12 +47,33 @@ export const FOOTER_LINKS = {
   },
 } as const;
 
-export const SOCIAL_LINKS = {
-  facebook: "https://facebook.com/fashionpalette.pk",
-  instagram: "https://instagram.com/fashionpalette.pk",
-  tiktok: "https://tiktok.com/@fashionpalette.pk",
-  youtube: "https://youtube.com/@fashionpalette",
+// Feedback 03/26/31: public business + contact details, sourced from the
+// approved policy documents. Emails are routed by purpose.
+export const CONTACT = {
+  location: "People’s Colony, Faisalabad, Punjab, Pakistan",
+  whatsappDisplay: "0327-6796087",
+  operatedBy: "Meelan Ahmad",
+  emails: {
+    general: "contact@fashionpalette.pk",
+    orders: "orders@fashionpalette.pk",
+    support: "support@fashionpalette.pk",
+    privacy: "privacy@fashionpalette.pk",
+  },
 } as const;
+
+// Feedback 06: only show social icons for accounts that genuinely exist. Set a
+// value to the real profile URL to display it; leave null to hide the icon.
+// (Client to confirm real handles before these are switched on.)
+export const SOCIAL_LINKS: Record<"facebook" | "instagram" | "tiktok" | "youtube", string | null> = {
+  facebook: null,
+  instagram: null,
+  tiktok: null,
+  youtube: null,
+};
+
+// Feedback 03/33: only advertise payment methods that are actually active and
+// tested at checkout. Card/bank/wallet get added here once each is enabled.
+export const ACTIVE_PAYMENT_METHODS = ["Cash on Delivery"] as const;
 
 export const PROVINCES = [
   "Punjab",

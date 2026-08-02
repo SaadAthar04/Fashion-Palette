@@ -38,7 +38,7 @@ const faqs = [
       },
       {
         q: "How do I initiate a return?",
-        a: "Contact us via WhatsApp at 0327-6796087 or email info@fashionpalette.pk with your order number and reason for return. We'll arrange a pickup.",
+        a: "Contact us via WhatsApp at 0327-6796087 or email support@fashionpalette.pk with your order number and reason for return. We'll arrange a pickup.",
       },
       {
         q: "When will I receive my refund?",

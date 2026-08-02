@@ -99,36 +99,36 @@ export default function ProductDetailClient({
               />
             )}
 
-            {/* Quantity */}
-            <div className="space-y-2.5">
-              <label className="text-[10px] font-semibold uppercase tracking-[0.2em]">
-                Quantity
-              </label>
-              <div className="flex items-center border border-border w-fit">
-                <button
-                  onClick={() =>
-                    setQuantity(Math.max(1, quantity - 1))
-                  }
-                  className="px-4 py-3 text-sm hover:bg-surface transition-colors duration-200"
-                >
-                  &minus;
-                </button>
-                <span className="px-6 py-3 text-[13px] font-semibold border-x border-border tabular-nums min-w-[48px] text-center">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => {
-                    const maxStock =
-                      selectedVariant?.stockQuantity ??
-                      product.stockQuantity;
-                    setQuantity(Math.min(quantity + 1, maxStock));
-                  }}
-                  className="px-4 py-3 text-sm hover:bg-surface transition-colors duration-200"
-                >
-                  +
-                </button>
+            {/* Quantity — hidden entirely when out of stock (Feedback 09) */}
+            {product.stockQuantity > 0 && (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-semibold uppercase tracking-[0.2em]">
+                  Quantity
+                </label>
+                <div className="flex items-center border border-border w-fit">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="px-4 py-3 text-sm hover:bg-surface transition-colors duration-200"
+                  >
+                    &minus;
+                  </button>
+                  <span className="px-6 py-3 text-[13px] font-semibold border-x border-border tabular-nums min-w-[48px] text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const maxStock =
+                        selectedVariant?.stockQuantity ??
+                        product.stockQuantity;
+                      setQuantity(Math.min(quantity + 1, maxStock));
+                    }}
+                    className="px-4 py-3 text-sm hover:bg-surface transition-colors duration-200"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-3">
@@ -161,9 +161,31 @@ export default function ProductDetailClient({
                     className="w-4 h-4 mr-2"
                     strokeWidth={1.5}
                   />
-                  WhatsApp Order
+                  {/* Feedback 09: don't imply an out-of-stock item can be ordered */}
+                  {product.stockQuantity <= 0 ? "Availability Enquiry" : "WhatsApp Order"}
                 </Button>
               </a>
+            </div>
+
+            {/* What's included (Feedback 08) */}
+            <div className="pt-4 text-[12px] text-muted leading-relaxed">
+              <span className="font-semibold text-primary">What&apos;s included:</span>{" "}
+              {product.pieceCount
+                ? `${product.pieceCount} — see the full component list in the Description below.`
+                : "See the full component list in the Description below."}
+            </div>
+
+            {/* Policy links under product info (Feedback 08 + Web Pages note) */}
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-[11px] pt-1">
+              <Link href="/shipping" className="text-muted hover:text-accent underline underline-offset-2">
+                Shipping &amp; Delivery
+              </Link>
+              <Link href="/returns" className="text-muted hover:text-accent underline underline-offset-2">
+                Returns &amp; Refunds
+              </Link>
+              <Link href="/payment" className="text-muted hover:text-accent underline underline-offset-2">
+                Payment Policy
+              </Link>
             </div>
 
             {/* Trust Badges */}
