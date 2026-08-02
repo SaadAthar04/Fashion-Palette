@@ -32,10 +32,14 @@ jobs:
             set -e
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            # The default nvm alias can be unset on this box, so a bare shell has
-            # no node on PATH. `nvm install --lts` is idempotent and activates it.
-            nvm install --lts >/dev/null 2>&1 || nvm use --lts
+            # Pin to the Node version the pm2 daemon runs on. `nvm install --lts`
+            # floated to a new patch and nvm keeps global pkgs (pm2) per-version,
+            # which broke `pm2 restart` (command not found) and risks a 2nd pm2
+            # daemon fighting for port 3000. Keep this in lockstep with the daemon.
+            nvm install 24.18.0 >/dev/null 2>&1 || true
+            nvm use 24.18.0
             node -v || { echo "Node not available after nvm"; exit 1; }
+            command -v pm2 >/dev/null 2>&1 || npm install -g pm2 >/dev/null 2>&1
             cd ~/htdocs/srv1815484.hstgr.cloud/Fashion-Palette/fashion-palette
             echo "==> Pull latest"
             git fetch origin main
