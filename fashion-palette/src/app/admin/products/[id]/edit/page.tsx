@@ -40,6 +40,16 @@ export default function EditProductPage() {
     salePrice: product.salePrice || "",
     fabric: product.fabric || "",
     occasion: product.occasion || "",
+    // Feedback 01/08: load the real values so editing doesn't silently reset
+    // publish status or wipe the fashion fields.
+    stitchType: product.stitchType || "",
+    workType: product.workType || "",
+    pieceCount: product.pieceCount || "",
+    season: product.season || "",
+    color: product.color || "",
+    careInstructions: product.careInstructions || "",
+    sourceUrl: product.sourceUrl || "",
+    publishStatus: product.publishStatus || "draft",
     isFeatured: product.isFeatured,
     isNewArrival: product.isNewArrival,
     isBestSeller: product.isBestSeller,
