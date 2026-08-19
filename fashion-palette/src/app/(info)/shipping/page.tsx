@@ -53,24 +53,24 @@ const sections: PolicySection[] = [
     ],
   },
   {
-    heading: "3. International delivery",
+    heading: "3. International delivery (enquiry only)",
     blocks: [
-      { h3: "3.1 Available destinations" },
+      { h3: "3.1 How international orders work" },
       {
-        p: "International delivery is offered only to destinations supported by SkyNet and accepted by Fashion Palette at the time of order. Availability can change because of courier, customs, sanctions, service-area, security, payment, or legal restrictions.",
+        p: "International checkout is not active on the website yet. Until a prepaid international payment method is activated, international orders are handled as enquiries. Customers outside Pakistan should contact us on WhatsApp at 0327-6796087 (or orders@fashionpalette.pk) with the product and destination before ordering.",
       },
       {
-        p: "If a destination is not available at checkout, contact orders@fashionpalette.pk before placing an order. A manual enquiry is not a guarantee that delivery can be offered.",
+        p: "We will check destination availability and provide a separate written quotation covering the product price, delivery and any known charges. Availability depends on destination, courier availability, parcel weight and size, quotation acceptance and prepayment, and can change because of courier, customs, sanctions, service-area, security, payment, or legal restrictions. An enquiry is not a guarantee that delivery can be offered.",
       },
-      { h3: "3.2 International charges and timing" },
+      { h3: "3.2 Quotation, currency and payment" },
       {
-        p: "International shipping charges depend on destination, parcel weight and size, courier pricing, and any special handling. The charge or quotation must be accepted before dispatch.",
+        p: "Any currency conversion shown on the website is an estimate only and is not a final quotation. The final WhatsApp quotation confirms the payable product price, shipping, and responsibility for customs, duties or taxes. The quotation must be accepted and prepaid before dispatch.",
       },
       {
         p: "International transit times vary by country, local courier, customs, public holidays, security checks, and regional conditions. Any estimate provided by Fashion Palette or SkyNet is an estimate rather than a guaranteed delivery date.",
       },
       {
-        p: "International orders must be prepaid using an online payment method actually displayed or approved for the order. Cash on Delivery is not available internationally unless Fashion Palette expressly confirms otherwise in writing.",
+        p: "International orders must be prepaid; Cash on Delivery is not available for international orders.",
       },
       { h3: "3.3 Customs, duties, and import rules" },
       { p: "Unless checkout expressly says otherwise, the recipient is responsible for:" },
