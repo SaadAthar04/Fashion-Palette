@@ -3,7 +3,7 @@ import { Scissors, Ruler, Truck } from "lucide-react";
 
 // Feedback 04: "Stitching service" section on the homepage.
 const points = [
-  { icon: Ruler, label: "Made to measure", desc: "Share your measurements at checkout" },
+  { icon: Ruler, label: "Made to measure", desc: "Share your measurements over WhatsApp" },
   { icon: Scissors, label: "Expert tailoring", desc: "Finished by professional master tailors" },
   { icon: Truck, label: "Delivered stitched", desc: "Ready-to-wear, straight to your door" },
 ];
@@ -21,8 +21,9 @@ export default function StitchingService() {
               Custom Stitching
             </h2>
             <p className="text-[13px] md:text-sm text-muted mt-4 leading-relaxed">
-              Love an unstitched design? Let us stitch it for you. Add stitching to any
-              unstitched suit and receive it made to your measurements.
+              Love an unstitched design? Let us stitch it for you. Send us the product on
+              WhatsApp and we&apos;ll confirm your measurements, stitching price and timeline
+              before we begin.
             </p>
           </div>
 

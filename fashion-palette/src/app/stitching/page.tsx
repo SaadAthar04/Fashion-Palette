@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const steps = [
-  { icon: Ruler, title: "Share your measurements", desc: "Add stitching to any unstitched suit and send us your size details." },
+  { icon: Ruler, title: "Share your measurements", desc: "Send us the unstitched product on WhatsApp along with your size details." },
   { icon: Scissors, title: "Expertly tailored", desc: "Our master tailors stitch your outfit with a clean, professional finish." },
   { icon: Truck, title: "Delivered ready-to-wear", desc: "Receive your stitched outfit at your doorstep, ready to wear." },
 ];
@@ -68,8 +68,8 @@ export default function StitchingPage() {
         <div className="bg-surface border border-border/60 p-8 md:p-12 text-center">
           <h3 className="text-lg font-medium">Ready to get stitched?</h3>
           <p className="text-[13px] text-muted mt-2 max-w-lg mx-auto">
-            Add stitching when you order an unstitched suit, or message us on WhatsApp with your design and
-            measurements for a quick quote and timeline.
+            Message us on WhatsApp with your unstitched design and measurements for a quick quote and
+            timeline. Stitching price and completion time are confirmed before we begin.
           </p>
           <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-6 bg-primary text-white px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.2em] hover:bg-accent transition-colors">
             <MessageCircle className="w-4 h-4" /> Chat with us

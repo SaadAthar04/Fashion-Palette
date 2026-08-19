@@ -21,7 +21,7 @@ export default function NewsletterSignup() {
       });
 
       if (res.ok) {
-        toast.success("You're in! Check your inbox for 10% off.");
+        toast.success("You're on the list! Watch your inbox for early announcements.");
         setEmail("");
       } else {
         const data = await res.json();
@@ -53,12 +53,12 @@ export default function NewsletterSignup() {
           </span>
 
           <h2 className="text-2xl md:text-3xl font-light text-white mt-3 tracking-tight">
-            Get 10% Off Your First Order
+            Become a VIP Member
           </h2>
 
           <p className="text-sm text-white/35 mt-4 mb-8 tracking-wide font-light leading-relaxed">
-            Subscribe to our newsletter for exclusive deals, new arrivals, and
-            style inspiration.
+            Join our list for early announcements and first access to upcoming
+            collections.
           </p>
 
           <form
