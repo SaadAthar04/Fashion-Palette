@@ -385,6 +385,10 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
   id: serial().primaryKey(),
   email: varchar({ length: 255 }).notNull().unique(),
   isActive: boolean("is_active").notNull().default(true),
+  // Final feedback B1: store consent date/time (subscribedAt) + source, and when
+  // the subscriber unsubscribed (one-click unsubscribe honoured immediately).
+  source: varchar({ length: 60 }),
+  unsubscribedAt: timestamp("unsubscribed_at"),
   subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
 });
 

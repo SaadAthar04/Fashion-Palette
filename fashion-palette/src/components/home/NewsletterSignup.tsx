@@ -17,14 +17,15 @@ export default function NewsletterSignup() {
       const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: "homepage_vip" }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        toast.success("You're on the list! Watch your inbox for early announcements.");
-        setEmail("");
+        // Distinct message for an already-subscribed email; no page reload.
+        toast.success(data.message || "You're on the VIP list!");
+        if (!data.alreadySubscribed) setEmail("");
       } else {
-        const data = await res.json();
         toast.error(data.error || "Something went wrong. Please try again.");
       }
     } catch {

@@ -268,6 +268,25 @@ export function adminLowStockEmail(items: { name: string; sku: string; stock: nu
   };
 }
 
+// Final feedback B1: branded VIP welcome email. No discount is promised — the
+// programme is early announcements + early access.
+export function newsletterWelcomeEmail(unsubscribeUrl: string) {
+  return {
+    subject: "Welcome to the Fashion Palette VIP list",
+    html: layout(
+      "You&rsquo;re on the VIP list",
+      `<p style="font-size:14px;color:#66636b;">Thank you for joining <strong>Fashion Palette VIP</strong>. You&rsquo;ll be among the first to receive:</p>
+       <ul style="font-size:13px;color:#66636b;line-height:1.9;">
+         <li>Early announcements of upcoming collections</li>
+         <li>First access to new arrivals and launches</li>
+       </ul>
+       <p style="font-size:13px;color:#66636b;">We&rsquo;ll only email you when there&rsquo;s something worth sharing.</p>
+       <p style="margin-top:20px;">${btn(SITE, "Explore new arrivals")}</p>
+       <p style="font-size:11px;color:#98959d;margin-top:20px;">You&rsquo;re receiving this because you subscribed at ${SITE.replace(/^https?:\/\//, "")}. <a href="${unsubscribeUrl}" style="color:#98959d;text-decoration:underline;">Unsubscribe</a> at any time.</p>`
+    ),
+  };
+}
+
 export function mfaCodeEmail(code: string) {
   return {
     subject: "Your Fashion Palette login code",

@@ -109,6 +109,20 @@ async function main() {
     console.log("• order_items.article_code already present");
   }
 
+  // Final feedback B1: newsletter consent source + unsubscribe timestamp.
+  if (!(await columnExists("newsletter_subscribers", "source"))) {
+    await pool.query("ALTER TABLE `newsletter_subscribers` ADD `source` varchar(60) NULL");
+    console.log("✓ newsletter_subscribers.source added");
+  } else {
+    console.log("• newsletter_subscribers.source already present");
+  }
+  if (!(await columnExists("newsletter_subscribers", "unsubscribed_at"))) {
+    await pool.query("ALTER TABLE `newsletter_subscribers` ADD `unsubscribed_at` timestamp NULL");
+    console.log("✓ newsletter_subscribers.unsubscribed_at added");
+  } else {
+    console.log("• newsletter_subscribers.unsubscribed_at already present");
+  }
+
   await pool.end();
   console.log("✅ apply-schema complete");
   process.exit(0);
