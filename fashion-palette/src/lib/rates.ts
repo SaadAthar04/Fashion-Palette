@@ -5,12 +5,12 @@ import { eq } from "drizzle-orm";
 import { FOREIGN_CODES, type CurrencyCode } from "@/lib/currency";
 
 // Final feedback B2: fetch exchange rates SERVER-SIDE from one approved provider,
-// refresh at least daily and cache them (in site_settings) so every page uses the
-// same rate. On failure, use the last cached rate; if none exists, fall back to
-// PKR only. No AI, no scraping.
+// refresh every 6 hours (4× per day) and cache them (in site_settings) so every
+// page uses the same rate. On failure, use the last cached rate; if none exists,
+// fall back to PKR only. No AI, no scraping.
 
 const CACHE_KEY = "exchange_rates";
-const REFRESH_MS = 24 * 60 * 60 * 1000; // refresh at least daily
+const REFRESH_MS = 6 * 60 * 60 * 1000; // refresh every 6 hours (4× per day)
 // Base = PKR. open.er-api.com is free and key-less; override with a keyed
 // provider via EXCHANGE_RATE_URL if desired (must return { rates: { USD: ... } }).
 const PROVIDER_URL = process.env.EXCHANGE_RATE_URL || "https://open.er-api.com/v6/latest/PKR";
