@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { FAQJsonLd } from "@/components/seo/JsonLd";
 import { cn } from "@/lib/utils";
 
+// Final feedback A2: approved FAQ copy. These answers must match the policy
+// pages, checkout behaviour and actual services (COD-only, WhatsApp for
+// international/stitching). Do not reword without the owner's approval.
 const faqs = [
   {
     category: "Orders & Shipping",
@@ -12,19 +16,19 @@ const faqs = [
     questions: [
       {
         q: "What are the delivery charges?",
-        a: "We offer FREE delivery on orders above Rs. 5,000 across Pakistan. For orders below Rs. 5,000, a flat delivery charge of Rs. 200 applies.",
+        a: "Delivery within Pakistan costs PKR 500. Delivery is complimentary when the merchandise subtotal is above PKR 10,000 after discounts.",
       },
       {
         q: "How long does delivery take?",
-        a: "Delivery typically takes 3-5 business days for major cities (Lahore, Karachi, Islamabad) and 5-7 business days for other areas across Pakistan.",
+        a: "Pakistan delivery normally takes an estimated 3–7 business days after stock confirmation. Eid holidays, public holidays, major launches, high-volume periods or courier delays may add approximately 5–7 business days.",
       },
       {
         q: "Do you deliver internationally?",
-        a: "Currently, we only deliver within Pakistan. We plan to expand internationally soon.",
+        a: "International checkout is not active yet. We currently accept Cash on Delivery orders within Pakistan. Customers outside Pakistan can contact us on WhatsApp at 0327-6796087. We will check destination availability and provide a separate quotation for the product, delivery and any known charges. Currency conversions shown on the website are estimates only.",
       },
       {
         q: "Can I track my order?",
-        a: "Yes! Once your order is shipped, you'll receive a tracking number via SMS and email. You can also track your order from your account dashboard.",
+        a: "Yes. After dispatch, we will send the courier name, tracking number and tracking link by email and/or WhatsApp. Tracking may also appear in your account or secure guest-order page where available.",
       },
     ],
   },
@@ -34,15 +38,15 @@ const faqs = [
     questions: [
       {
         q: "What is your return policy?",
-        a: "Please report any defect, damage or wrong item within 48 hours of delivery with photos/video. We don't accept change-of-mind returns. See our Returns & Refunds policy for full details.",
+        a: "Report a wrong, damaged, defective, missing or materially misdescribed item within 48 hours of delivery. Photos and an unedited opening video may be required. Change-of-mind returns are not accepted. Please read the Returns & Refunds Policy for the complete conditions.",
       },
       {
         q: "How do I initiate a return?",
-        a: "Contact us via WhatsApp at 0327-6796087 or email support@fashionpalette.pk with your order number and reason for return. We'll arrange a pickup.",
+        a: "Contact support@fashionpalette.pk or WhatsApp 0327-6796087 within 48 hours and provide your order number, reason, photos and opening video. If the request is approved, we will provide return or collection instructions. Do not send an item back without written authorization.",
       },
       {
         q: "When will I receive my refund?",
-        a: "Refunds are processed within 5-7 business days after we receive and inspect the returned item. COD refunds are processed via bank transfer.",
+        a: "After an eligible returned item is received and inspected, the refund is normally initiated within 7–10 business days. Bank or wallet processing may require additional time. Cash on Delivery refunds are issued through an approved bank account, JazzCash or Easypaisa method.",
       },
     ],
   },
@@ -51,11 +55,11 @@ const faqs = [
     questions: [
       {
         q: "What payment methods do you accept?",
-        a: "We accept Cash on Delivery (COD), Bank Transfer, JazzCash, and EasyPaisa. Credit/debit card options coming soon.",
+        a: "Cash on Delivery is currently available for eligible orders within Pakistan. Additional payment methods will appear at checkout only after they have been activated and tested.",
       },
       {
         q: "Is Cash on Delivery available everywhere?",
-        a: "Yes, COD is available across all major cities and most towns in Pakistan.",
+        a: "Cash on Delivery is available for eligible serviceable addresses within Pakistan and is confirmed during checkout. Courier availability can vary by location.",
       },
     ],
   },
@@ -65,15 +69,15 @@ const faqs = [
     questions: [
       {
         q: "Are all products authentic?",
-        a: "Absolutely! We only sell 100% authentic products sourced from authorized retailers and brand outlets. Every item comes with original tags and packaging.",
+        a: "Fashion Palette sells 100% original products sourced through verified and genuine retail channels. Product presentation, tags and packaging may vary by brand and collection.",
       },
       {
         q: "How do I choose the right size?",
-        a: "Each product page includes a size guide specific to that brand. Generally: S (34-36), M (38-40), L (42-44), XL (46-48). For unstitched suits, the standard fabric length is included in the product description.",
+        a: "For unstitched products, review the component and fabric lengths shown in the product details. Size and measurement information is shown for stitched or ready-to-wear products where applicable. Contact us before ordering if a required measurement is unclear.",
       },
       {
         q: "Can I get stitching done?",
-        a: "Currently, we sell unstitched suits as-is. However, we can recommend trusted tailors in major cities. Contact us for details.",
+        a: "Custom stitching may be requested through WhatsApp for eligible unstitched suits. Send the product link and your requirements to 0327-6796087. Measurements, stitching price and completion time must be confirmed before stitching begins.",
       },
     ],
   },
@@ -84,6 +88,7 @@ export default function FAQPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
+      <FAQJsonLd questions={faqs.flatMap((s) => s.questions.map((f) => ({ question: f.q, answer: f.a })))} />
       <Breadcrumb items={[{ label: "FAQ" }]} className="mb-6" />
 
       <div className="max-w-3xl mx-auto">
