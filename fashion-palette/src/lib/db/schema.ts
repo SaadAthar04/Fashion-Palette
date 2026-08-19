@@ -270,6 +270,9 @@ export const orders = mysqlTable("orders", {
   courier: varchar({ length: 100 }),
   trackingNumber: varchar("tracking_number", { length: 100 }),
   notes: text(),
+  // Final feedback A6: orders flagged as test are excluded from dashboard
+  // revenue/order statistics so QA/test activity never skews the numbers.
+  isTest: boolean("is_test").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });

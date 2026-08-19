@@ -22,10 +22,10 @@ export async function GET() {
     [pendingReturns],
   ] = await Promise.all([
     db.select({ orders: count(), revenue: sql<string>`coalesce(sum(${orders.total}),0)` })
-      .from(orders).where(ne(orders.status, "cancelled")),
+      .from(orders).where(and(ne(orders.status, "cancelled"), eq(orders.isTest, false))),
     db.select({ orders: count(), revenue: sql<string>`coalesce(sum(${orders.total}),0)` })
-      .from(orders).where(and(ne(orders.status, "cancelled"), sql`${orders.createdAt} >= ${monthStart}`)),
-    db.select({ status: orders.status, c: count() }).from(orders).groupBy(orders.status),
+      .from(orders).where(and(ne(orders.status, "cancelled"), eq(orders.isTest, false), sql`${orders.createdAt} >= ${monthStart}`)),
+    db.select({ status: orders.status, c: count() }).from(orders).where(eq(orders.isTest, false)).groupBy(orders.status),
     db.select({ id: products.id, name: products.name, sku: products.sku, stock: products.stockQuantity, threshold: products.lowStockThreshold, brand: brands.name })
       .from(products).leftJoin(brands, eq(products.brandId, brands.id))
       .where(and(eq(products.isActive, true), gt(products.stockQuantity, 0), sql`${products.stockQuantity} <= ${products.lowStockThreshold}`))
@@ -35,7 +35,7 @@ export async function GET() {
       .where(and(eq(products.isActive, true), eq(products.stockQuantity, 0)))
       .orderBy(desc(products.updatedAt)).limit(100),
     db.select({ id: orders.id, orderNumber: orders.orderNumber, total: orders.total, createdAt: orders.createdAt })
-      .from(orders).where(eq(orders.paymentStatus, "failed")).orderBy(desc(orders.createdAt)).limit(50),
+      .from(orders).where(and(eq(orders.paymentStatus, "failed"), eq(orders.isTest, false))).orderBy(desc(orders.createdAt)).limit(50),
     db.select({ c: count() }).from(returns).where(inArray(returns.status, ["requested", "approved", "item_received", "inspected", "replacement_sent"])),
   ]);
 

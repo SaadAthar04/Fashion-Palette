@@ -361,7 +361,7 @@ export default function CartPage() {
                   <span className="font-bold text-lg">{formatPrice(total)}</span>
                 </div>
                 <p className="text-xs text-muted mt-1">
-                  Inclusive of all taxes
+                  Prices shown in Pakistani Rupees (PKR).
                 </p>
               </div>
             </div>

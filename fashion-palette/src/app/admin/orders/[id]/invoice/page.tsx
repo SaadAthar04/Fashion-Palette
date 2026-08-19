@@ -93,7 +93,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
         <p className="text-[11px] text-muted mt-10 pt-6 border-t border-border">
           Thank you for shopping with Fashion Palette. Report any issue within 48 hours of delivery to {CONTACT.emails.support}.
-          Prices in PKR, inclusive of applicable taxes.
+          Prices in PKR.
         </p>
       </div>
     </div>

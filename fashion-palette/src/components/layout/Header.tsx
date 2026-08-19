@@ -21,7 +21,15 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
   const [megaOpen, setMegaOpen] = useState(false);
   const { data: session } = useSession();
   const { isOpen: cartOpen, openCart, closeCart, getItemCount } = useCart();
-  const itemCount = getItemCount();
+  // Final feedback A6: avoid a hydration mismatch (and the resulting signed-in /
+  // signed-out flicker). The cart count comes from a localStorage-backed store
+  // and the session resolves client-side, so both are empty during SSR. Render
+  // the neutral (server) state until mounted, then reveal the real state.
+  const [mounted, setMounted] = useState(false);
+  const itemCount = mounted ? getItemCount() : 0;
+  const isSignedIn = mounted && !!session;
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -105,7 +113,7 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
               </button>
 
               <Link
-                href={session ? "/account" : "/account/login"}
+                href={isSignedIn ? "/account" : "/account/login"}
                 className="hidden md:flex p-2.5 text-primary/70 hover:text-accent transition-colors duration-300"
                 aria-label="Account"
               >

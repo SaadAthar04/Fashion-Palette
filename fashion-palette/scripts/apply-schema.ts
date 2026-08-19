@@ -85,6 +85,14 @@ async function main() {
   );
   console.log("✓ products.publish_status enum ensured");
 
+  // Final feedback A6: test-order flag (excluded from dashboard revenue/stats).
+  if (!(await columnExists("orders", "is_test"))) {
+    await pool.query("ALTER TABLE `orders` ADD `is_test` boolean NOT NULL DEFAULT false");
+    console.log("✓ orders.is_test added");
+  } else {
+    console.log("• orders.is_test already present");
+  }
+
   await pool.end();
   console.log("✅ apply-schema complete");
   process.exit(0);

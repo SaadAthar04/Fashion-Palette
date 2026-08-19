@@ -12,6 +12,7 @@ interface OrderStatusFormProps {
   currentPaymentStatus: string;
   currentTrackingNumber: string;
   currentNotes: string;
+  currentIsTest?: boolean;
 }
 
 export default function OrderStatusForm({
@@ -20,6 +21,7 @@ export default function OrderStatusForm({
   currentPaymentStatus,
   currentTrackingNumber,
   currentNotes,
+  currentIsTest = false,
 }: OrderStatusFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +31,7 @@ export default function OrderStatusForm({
   const [courier, setCourier] = useState("");
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState(currentNotes);
+  const [isTest, setIsTest] = useState(currentIsTest);
 
   const handleUpdate = async () => {
     if (isSubmitting) return;
@@ -37,7 +40,7 @@ export default function OrderStatusForm({
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, paymentStatus, trackingNumber, courier, note, notes }),
+        body: JSON.stringify({ status, paymentStatus, trackingNumber, courier, note, notes, isTest }),
       });
 
       if (!res.ok) throw new Error("Failed to update");
@@ -123,6 +126,17 @@ export default function OrderStatusForm({
           className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent resize-none"
         />
       </div>
+
+      {/* A6: exclude QA/test orders from dashboard revenue & statistics */}
+      <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none border-t border-border pt-4">
+        <input
+          type="checkbox"
+          checked={isTest}
+          onChange={(e) => setIsTest(e.target.checked)}
+          className="w-4 h-4 accent-accent"
+        />
+        <span>Test order <span className="text-muted">— excluded from revenue &amp; statistics</span></span>
+      </label>
 
       <Button onClick={handleUpdate} isLoading={isSubmitting} size="sm" className="w-full">
         Update Order

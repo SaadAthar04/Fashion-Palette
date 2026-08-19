@@ -40,7 +40,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             Placed on {new Date(order.createdAt).toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
-        <span className={cn("text-xs font-medium px-3 py-1.5 rounded-full ml-auto", statusInfo?.color)}>
+        {order.isTest && (
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 ml-auto">TEST</span>
+        )}
+        <span className={cn("text-xs font-medium px-3 py-1.5 rounded-full", !order.isTest && "ml-auto", statusInfo?.color)}>
           {statusInfo?.label || order.status}
         </span>
         <Link
@@ -153,6 +156,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             currentPaymentStatus={order.paymentStatus}
             currentTrackingNumber={order.trackingNumber || ""}
             currentNotes={order.notes || ""}
+            currentIsTest={order.isTest}
           />
         </div>
       </div>

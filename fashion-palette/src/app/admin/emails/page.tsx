@@ -55,11 +55,23 @@ export default function AdminEmailsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-2">Email delivery log</h1>
-      <p className="text-[13px] text-muted mb-6">
-        Every transactional email and its outcome. {data?.failedCount > 0 && (
-          <span className="text-red-600 font-medium">{data.failedCount} failed — check SMTP settings.</span>
+      <p className="text-[13px] text-muted mb-2">
+        Every transactional email and its outcome.{" "}
+        {data?.recentFailedCount > 0 ? (
+          <span className="text-red-600 font-medium">
+            SMTP health: {data.recentFailedCount} failed in the last 24 hours — check SMTP settings.
+          </span>
+        ) : (
+          <span className="text-green-700 font-medium">SMTP health: no failures in the last 24 hours.</span>
         )}
       </p>
+      {data?.failedCount > 0 && (
+        <p className="text-[12px] text-muted mb-6">
+          {data.failedCount} failed email{data.failedCount === 1 ? "" : "s"} on record in total (historical).
+          Use the <strong>failed</strong> filter to review older delivery issues — these do not affect current health.
+        </p>
+      )}
+      {!data?.failedCount && <div className="mb-6" />}
 
       {/* SMTP test tool (Feedback 31) */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">

@@ -71,6 +71,7 @@ export async function PATCH(
   if (body.paymentStatus) updateData.paymentStatus = body.paymentStatus;
   if (body.paymentReference !== undefined) updateData.paymentReference = body.paymentReference;
   if (body.notes !== undefined) updateData.notes = body.notes;
+  if (body.isTest !== undefined) updateData.isTest = !!body.isTest; // A6: flag/unflag test order
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
