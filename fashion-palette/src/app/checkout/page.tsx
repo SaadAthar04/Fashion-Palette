@@ -11,6 +11,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice, getImageUrl } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 import { cn } from "@/lib/utils";
 import { PROVINCES, CITIES } from "@/lib/constants";
 import { useDeliveryConfig } from "@/hooks/useDeliveryConfig";
@@ -319,6 +320,12 @@ export default function CheckoutPage() {
               <div className="flex justify-between"><span className="text-muted">Delivery</span><span className={deliveryCharges === 0 ? "text-success font-medium" : "font-medium"}>{deliveryCharges === 0 ? "FREE" : formatPrice(deliveryCharges)}</span></div>
               <hr className="border-border" />
               <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{formatPrice(total)}</span></div>
+              {/* B2: PKR is the official order currency; a selected foreign
+                  currency is shown only as an estimate. */}
+              <div className="flex justify-between text-xs text-muted">
+                <span>Charged in PKR</span>
+                <Price pkr={total} foreignOnly className="italic" />
+              </div>
             </div>
           </div>
         </div>

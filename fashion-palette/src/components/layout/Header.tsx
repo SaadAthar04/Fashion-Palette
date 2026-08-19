@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart";
 import MobileMenu from "./MobileMenu";
 import SearchModal from "./SearchModal";
 import CartDrawer from "./CartDrawer";
+import CurrencySelector from "@/components/currency/CurrencySelector";
 
 export type MenuBrand = { id: number; name: string; slug: string };
 
@@ -138,6 +139,7 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
 
             {/* Actions */}
             <div className="flex items-center gap-0.5 md:gap-1">
+              <CurrencySelector className="hidden sm:block mr-1" />
               <button
                 onClick={() => setSearchOpen(true)}
                 className="p-2.5 text-primary/70 hover:text-accent transition-colors duration-300"

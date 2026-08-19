@@ -5,7 +5,8 @@ import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Drawer from "@/components/ui/Drawer";
 import { useCart } from "@/hooks/useCart";
-import { formatPrice, getImageUrl } from "@/lib/utils";
+import { getImageUrl } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 import { FREE_DELIVERY_THRESHOLD } from "@/lib/constants";
 
 interface CartDrawerProps {
@@ -49,7 +50,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <p className="text-[11px] text-muted text-center tracking-wide">
                 Add{" "}
                 <span className="font-semibold text-accent">
-                  {formatPrice(remaining)}
+                  <Price pkr={remaining} showEst={false} />
                 </span>{" "}
                 more for free delivery
               </p>
@@ -106,7 +107,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       </p>
                     )}
                     <p className="text-[13px] font-semibold mt-1.5">
-                      {formatPrice(price)}
+                      <Price pkr={price} showEst={false} />
                     </p>
 
                     <div className="flex items-center justify-between mt-2.5">
@@ -161,7 +162,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 Subtotal
               </span>
               <span className="text-base font-semibold">
-                {formatPrice(subtotal)}
+                <Price pkr={subtotal} showEst={false} />
               </span>
             </div>
             <p className="text-[10px] text-muted/40 tracking-wide">

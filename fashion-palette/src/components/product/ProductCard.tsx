@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, Heart, Eye } from "lucide-react";
 import Badge from "@/components/ui/Badge";
-import { formatPrice, calculateDiscount, getImageUrl, cn } from "@/lib/utils";
+import { calculateDiscount, getImageUrl, cn } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 import type { Product } from "@/types";
 
 interface ProductCardProps {
@@ -107,17 +108,11 @@ export default function ProductCard({
         <div className="flex items-baseline gap-2.5 pt-0.5">
           {hasDiscount ? (
             <>
-              <span className="text-sm font-semibold text-sale">
-                {formatPrice(product.salePrice!)}
-              </span>
-              <span className="text-[11px] text-muted/60 line-through">
-                {formatPrice(product.basePrice)}
-              </span>
+              <Price pkr={product.salePrice!} className="text-sm font-semibold text-sale" showEst={false} />
+              <Price pkr={product.basePrice} className="text-[11px] text-muted/60 line-through" showEst={false} />
             </>
           ) : (
-            <span className="text-sm font-semibold">
-              {formatPrice(product.basePrice)}
-            </span>
+            <Price pkr={product.basePrice} className="text-sm font-semibold" showEst={false} />
           )}
         </div>
       </div>

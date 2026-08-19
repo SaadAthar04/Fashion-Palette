@@ -1,4 +1,5 @@
-import { cn, formatPrice, calculateDiscount } from "@/lib/utils";
+import { cn, calculateDiscount } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 import Badge from "@/components/ui/Badge";
 import type { Product } from "@/types";
 
@@ -42,27 +43,18 @@ export default function ProductInfo({
       </div>
 
       {/* Price */}
-      <div className="flex items-baseline gap-3">
+      <div className="flex items-baseline gap-3 flex-wrap">
         {hasDiscount ? (
           <>
-            <span className="text-2xl md:text-3xl font-semibold text-sale">
-              {formatPrice(product.salePrice!)}
-            </span>
-            <span className="text-base text-muted/50 line-through">
-              {formatPrice(product.basePrice)}
-            </span>
+            <Price pkr={product.salePrice!} className="text-2xl md:text-3xl font-semibold text-sale" />
+            <Price pkr={product.basePrice} className="text-base text-muted/50 line-through" showEst={false} />
             <span className="text-[10px] font-semibold text-sale uppercase tracking-wider">
               Save{" "}
-              {formatPrice(
-                parseFloat(product.basePrice) -
-                  parseFloat(product.salePrice!)
-              )}
+              <Price pkr={parseFloat(product.basePrice) - parseFloat(product.salePrice!)} showEst={false} />
             </span>
           </>
         ) : (
-          <span className="text-2xl md:text-3xl font-semibold">
-            {formatPrice(product.basePrice)}
-          </span>
+          <Price pkr={product.basePrice} className="text-2xl md:text-3xl font-semibold" />
         )}
       </div>
 

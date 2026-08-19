@@ -7,7 +7,8 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Truck, ShieldCheck } from 
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/hooks/useCart";
-import { cn, formatPrice, getImageUrl } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 import { useDeliveryConfig } from "@/hooks/useDeliveryConfig";
 
 export default function CartPage() {
@@ -78,7 +79,7 @@ export default function CartPage() {
           <div className="flex items-center gap-2 mb-2">
             <Truck className="w-4 h-4 text-accent" />
             <p className="text-sm">
-              Add <span className="font-semibold text-accent">{formatPrice(remaining)}</span> more
+              Add <span className="font-semibold text-accent"><Price pkr={remaining} showEst={false} /></span> more
               for <span className="font-semibold">free delivery!</span>
             </p>
           </div>
@@ -159,11 +160,11 @@ export default function CartPage() {
                       )}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm font-semibold">
-                          {formatPrice(unitPrice)}
+                          <Price pkr={unitPrice} showEst={false} />
                         </span>
                         {item.product.salePrice && (
                           <span className="text-xs text-muted line-through">
-                            {formatPrice(item.product.basePrice)}
+                            <Price pkr={item.product.basePrice} showEst={false} />
                           </span>
                         )}
                       </div>
@@ -201,7 +202,7 @@ export default function CartPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold">
-                            {formatPrice(lineTotal)}
+                            <Price pkr={lineTotal} showEst={false} />
                           </span>
                           <button
                             onClick={() =>
@@ -262,11 +263,11 @@ export default function CartPage() {
                     </div>
                     <div className="col-span-2 text-center">
                       <span className="text-sm font-semibold">
-                        {formatPrice(unitPrice)}
+                        <Price pkr={unitPrice} showEst={false} />
                       </span>
                       {item.product.salePrice && (
                         <span className="block text-xs text-muted line-through">
-                          {formatPrice(item.product.basePrice)}
+                          <Price pkr={item.product.basePrice} showEst={false} />
                         </span>
                       )}
                     </div>
@@ -305,7 +306,7 @@ export default function CartPage() {
                     </div>
                     <div className="col-span-2 text-right">
                       <span className="text-sm font-bold">
-                        {formatPrice(lineTotal)}
+                        <Price pkr={lineTotal} showEst={false} />
                       </span>
                     </div>
                   </div>
@@ -334,7 +335,7 @@ export default function CartPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted">Subtotal</span>
-                <span className="font-medium">{formatPrice(subtotal)}</span>
+                <span className="font-medium"><Price pkr={subtotal} showEst={false} /></span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted">Delivery Charges</span>
@@ -346,7 +347,7 @@ export default function CartPage() {
                 >
                   {deliveryCharges === 0
                     ? "FREE"
-                    : formatPrice(deliveryCharges)}
+                    : <Price pkr={deliveryCharges} showEst={false} />}
                 </span>
               </div>
               {deliveryCharges === 0 && (
@@ -358,7 +359,7 @@ export default function CartPage() {
               <div className="pt-3 mt-3 border-t border-border">
                 <div className="flex justify-between text-base">
                   <span className="font-bold">Total</span>
-                  <span className="font-bold text-lg">{formatPrice(total)}</span>
+                  <span className="font-bold text-lg"><Price pkr={total} showEst={false} /></span>
                 </div>
                 <p className="text-xs text-muted mt-1">
                   Prices shown in Pakistani Rupees (PKR).
@@ -381,7 +382,7 @@ export default function CartPage() {
               <div className="flex items-center gap-2 text-xs text-muted">
                 <Truck className="w-4 h-4 text-accent flex-shrink-0" />
                 <span>
-                  Free delivery on orders above {formatPrice(freeThreshold)}
+                  Free delivery on orders above <Price pkr={freeThreshold} showEst={false} />
                 </span>
               </div>
             </div>
