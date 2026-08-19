@@ -15,6 +15,7 @@
     "db:del-samples": "tsx scripts/delete-samples.ts",
     "db:del-order": "tsx scripts/delete-order.ts",
     "db:clean-catalogue": "tsx scripts/clean-catalogue.ts",
+    "db:unpublish-bad-prices": "tsx scripts/unpublish-bad-prices.ts",
     "db:apply-schema": "tsx scripts/apply-schema.ts"
   },
   "dependencies": {

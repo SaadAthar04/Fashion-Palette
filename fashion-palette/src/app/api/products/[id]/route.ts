@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
+import { productWriteError } from "../route";
 
 export async function GET(
   _request: NextRequest,
@@ -102,11 +103,7 @@ export async function PUT(
     revalidateCatalog(); // reflect visibility/price/stock changes immediately (Feedback 01)
     return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid product data" }, { status: 400 });
-    }
-    console.error("Update product error:", error);
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    return productWriteError(error, "update");
   }
 }
 

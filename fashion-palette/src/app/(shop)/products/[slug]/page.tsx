@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { products, reviews, users } from "@/lib/db/schema";
-import { eq, and, ne, desc } from "drizzle-orm";
+import { eq, and, ne, desc, gt } from "drizzle-orm";
 import ProductDetailClient from "./ProductDetailClient";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
@@ -22,10 +22,13 @@ const sizeGuide = [
 async function getProduct(slug: string) {
   const product = await db.query.products.findFirst({
     // Feedback 22: draft products must not be publicly reachable by URL.
+    // Final feedback A1: defence-in-depth — never surface (or allow adding to
+    // cart) a product with a zero/invalid price, even if somehow published.
     where: and(
       eq(products.slug, slug),
       eq(products.isActive, true),
-      eq(products.publishStatus, "published")
+      eq(products.publishStatus, "published"),
+      gt(products.basePrice, "0")
     ),
     with: {
       brand: true,

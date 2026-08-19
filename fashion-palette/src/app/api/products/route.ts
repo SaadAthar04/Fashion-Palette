@@ -3,12 +3,37 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products, productImages, productVariants, auditLog } from "@/lib/db/schema";
-import { eq, and, or, like, desc, asc, sql, count } from "drizzle-orm";
+import { eq, and, or, like, desc, asc, count } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
+import { z } from "zod";
 
 const STAFF_ROLES = ["admin", "catalogue_editor", "order_manager"];
+
+// Shared error handler for product create/update (Final feedback A1). Surfaces
+// the specific validation message (e.g. "Cannot publish without a valid PKR
+// price") and turns a DB unique-key collision into a friendly SKU/slug message.
+export function productWriteError(error: unknown, action: "create" | "update") {
+  if (error instanceof z.ZodError) {
+    const first = error.issues[0];
+    const field = first?.path?.join(".") || "field";
+    return NextResponse.json(
+      { error: first?.message || "Invalid product data", field },
+      { status: 400 }
+    );
+  }
+  const e = error as { code?: string; errno?: number; message?: string };
+  if (e?.code === "ER_DUP_ENTRY" || e?.errno === 1062) {
+    const dupField = /sku/i.test(e.message || "") ? "SKU" : /slug/i.test(e.message || "") ? "slug" : "SKU or slug";
+    return NextResponse.json(
+      { error: `A product with this ${dupField} already exists. SKU and slug must be unique.`, field: dupField.toLowerCase() },
+      { status: 409 }
+    );
+  }
+  console.error(`${action} product error:`, error);
+  return NextResponse.json({ error: `Failed to ${action} product` }, { status: 500 });
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -128,10 +153,6 @@ export async function POST(request: NextRequest) {
     revalidateCatalog();
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid product data" }, { status: 400 });
-    }
-    console.error("Create product error:", error);
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+    return productWriteError(error, "create");
   }
 }

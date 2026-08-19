@@ -56,7 +56,12 @@ export const productSchema = z.object({
   categoryId: z.number().int().positive(),
   collectionId: z.number().int().positive().nullable().optional(),
   basePrice: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price"),
-  salePrice: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
+  salePrice: z
+    .string()
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .refine((v) => v == null || /^\d+(\.\d{1,2})?$/.test(v), "Invalid sale price"),
   fabric: emptyToNull,
   occasion: emptyToNull,
   // Feedback 09 fashion fields
@@ -78,7 +83,46 @@ export const productSchema = z.object({
   sku: z.string().min(2),
   metaTitle: emptyToNull,
   metaDescription: emptyToNull,
-});
+})
+  // Final feedback A1: price integrity. PKR is the only stored base price. A
+  // blank/zero/negative base price can never be saved, and such a product can
+  // never be published — an incorrect price must never reach the storefront/cart.
+  .superRefine((data, ctx) => {
+    const base = parseFloat(data.basePrice);
+    if (!Number.isFinite(base) || base <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["basePrice"],
+        message: "Base price (PKR) must be greater than zero.",
+      });
+    }
+    if (data.salePrice != null && data.salePrice !== "") {
+      const sale = parseFloat(data.salePrice);
+      if (!Number.isFinite(sale) || sale <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["salePrice"],
+          message: "Sale price must be greater than zero (leave blank for no sale).",
+        });
+      } else if (Number.isFinite(base) && sale >= base) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["salePrice"],
+          message: "Sale price must be lower than the base price.",
+        });
+      }
+    }
+    // Publishing requires a valid, positive price. (Prices below the low-price
+    // warning floor are allowed to publish but flagged in the data-integrity
+    // report — see LOW_PRICE_WARNING_PKR.)
+    if (data.publishStatus === "published" && (!Number.isFinite(base) || base <= 0)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["publishStatus"],
+        message: "Cannot publish a product without a valid PKR price.",
+      });
+    }
+  });
 
 export const categorySchema = z.object({
   name: z.string().min(2, "Category name is required"),

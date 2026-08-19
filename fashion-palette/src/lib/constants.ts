@@ -8,6 +8,14 @@ export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "92327
 export const FREE_DELIVERY_THRESHOLD = 10000;
 export const DEFAULT_DELIVERY_CHARGES = 500;
 
+// Final feedback A1: price data-integrity thresholds (PKR is the only stored base
+// price). A published product must have base_price > 0 (blank/zero/negative is
+// hard-blocked). Prices below this floor are almost certainly un-converted
+// foreign-currency values (the live catalogue had 35 items at Rs. 77–238), so
+// they are surfaced as warnings in the import preview and the data-integrity
+// report — but may still be published if an editor deliberately confirms them.
+export const LOW_PRICE_WARNING_PKR = 1000;
+
 // Feedback 01: exact final navigation order. "New Arrivals" stays plural everywhere.
 // Brands opens a mega menu and also has a full All Brands page.
 export const NAV_LINKS = [

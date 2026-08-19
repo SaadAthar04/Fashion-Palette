@@ -4,6 +4,22 @@ import { products, brands, categories, productImages, auditLog } from "@/lib/db/
 import { eq } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
+import { LOW_PRICE_WARNING_PKR } from "@/lib/constants";
+
+// One preview row per CSV line (Final feedback A1 import preview). Shows the
+// source value/currency, the final stored PKR price and any validation
+// warnings so nothing incorrect is committed blindly.
+type PreviewRow = {
+  line: number;
+  name: string;
+  sku: string;
+  sourceValue: string;
+  sourceCurrency: string;
+  finalPkr: string | null;
+  status: "ok" | "skip" | "error";
+  warnings: string[];
+  error?: string;
+};
 
 // Minimal CSV parser (handles quoted fields, escaped quotes, CRLF).
 function parseCsv(text: string): Record<string, string>[] {
@@ -57,29 +73,61 @@ export async function POST(req: NextRequest) {
 
     let created = 0, skipped = 0;
     const errors: string[] = [];
+    const preview: PreviewRow[] = [];
+    // Detect duplicate SKUs/slugs *within the CSV itself* (not just against the DB).
+    const seenSku = new Map<string, number>();
+    const seenSlug = new Map<string, number>();
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const line = i + 2; // account for header row
-      const name = r.name?.trim();
-      const sku = r.sku?.trim();
-      if (!name || !sku) { errors.push(`Row ${line}: missing name or sku`); continue; }
+      const name = r.name?.trim() || "";
+      const sku = r.sku?.trim() || "";
+      // Optional display-only columns: the source value/currency this PKR price
+      // was derived from. Never stored — PKR (basePrice) is the only base price.
+      const sourceValue = r.sourcePrice?.trim() || r.basePrice?.trim() || "";
+      const sourceCurrency = (r.sourceCurrency?.trim() || "PKR").toUpperCase();
+      const pushErr = (msg: string) => {
+        errors.push(`Row ${line}: ${msg}`);
+        preview.push({ line, name, sku, sourceValue, sourceCurrency, finalPkr: null, status: "error", warnings: [], error: msg });
+      };
+
+      if (!name || !sku) { pushErr("missing name or sku"); continue; }
 
       const brandId = brandBy.get(r.brandSlug?.trim());
       const categoryId = catBy.get(r.categorySlug?.trim());
-      if (!brandId) { errors.push(`Row ${line}: unknown brandSlug "${r.brandSlug}"`); continue; }
-      if (!categoryId) { errors.push(`Row ${line}: unknown categorySlug "${r.categorySlug}"`); continue; }
-      if (!/^\d+(\.\d{1,2})?$/.test(r.basePrice || "")) { errors.push(`Row ${line}: invalid basePrice`); continue; }
+      if (!brandId) { pushErr(`unknown brandSlug "${r.brandSlug}"`); continue; }
+      if (!categoryId) { pushErr(`unknown categorySlug "${r.categorySlug}"`); continue; }
+      if (!/^\d+(\.\d{1,2})?$/.test(r.basePrice || "")) { pushErr("invalid basePrice"); continue; }
+
+      const priceNum = parseFloat(r.basePrice);
+      const finalPkr = priceNum.toFixed(2);
+      if (priceNum <= 0) { pushErr("basePrice must be greater than zero"); continue; }
 
       const slug = (r.slug?.trim() || slugify(name)).slice(0, 480);
 
-      // Duplicate check (slug or sku)
+      // Validation warnings — do not block import, but surface before commit.
+      const warnings: string[] = [];
+      if (priceNum < LOW_PRICE_WARNING_PKR) warnings.push(`price below Rs ${LOW_PRICE_WARNING_PKR.toLocaleString("en-PK")} — check source currency`);
+      if (!r.imageUrl?.trim()) warnings.push("missing image");
+      if (!r.description?.trim() && !r.shortDescription?.trim()) warnings.push("missing description");
+      if (!r.stockQuantity?.trim()) warnings.push("missing stock quantity (defaults to 0)");
+      if (seenSku.has(sku)) warnings.push(`duplicate SKU within CSV (also row ${seenSku.get(sku)})`);
+      if (seenSlug.has(slug)) warnings.push(`duplicate slug within CSV (also row ${seenSlug.get(slug)})`);
+      seenSku.set(sku, line);
+      seenSlug.set(slug, line);
+
+      // Duplicate check against existing catalogue (slug or sku)
       const [dupSlug] = await db.select({ id: products.id }).from(products).where(eq(products.slug, slug)).limit(1);
       const [dupSku] = await db.select({ id: products.id }).from(products).where(eq(products.sku, sku)).limit(1);
-      if (dupSlug || dupSku) { skipped++; continue; }
+      if (dupSlug || dupSku) {
+        skipped++;
+        preview.push({ line, name, sku, sourceValue, sourceCurrency, finalPkr, status: "skip", warnings: ["already exists (duplicate SKU or slug) — skipped"] });
+        continue;
+      }
 
       // Dry-run: validate only, never write (Feedback 17 preview).
-      if (dryRun) { created++; continue; }
+      if (dryRun) { created++; preview.push({ line, name, sku, sourceValue, sourceCurrency, finalPkr, status: "ok", warnings }); continue; }
 
       const stitchType = STITCH.includes(r.stitchType) ? (r.stitchType as "stitched" | "unstitched") : null;
       const workType = WORK.includes(r.workType) ? (r.workType as "print" | "embroidered" | "plain" | "mixed") : null;
@@ -111,6 +159,7 @@ export async function POST(req: NextRequest) {
         await db.insert(productImages).values({ productId: res.id, imageUrl: r.imageUrl, altText: name.slice(0, 255), sortOrder: 0, isPrimary: true });
       }
       created++;
+      preview.push({ line, name, sku, sourceValue, sourceCurrency, finalPkr, status: "ok", warnings });
     }
 
     if (!dryRun) {
@@ -122,7 +171,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ ok: true, dryRun: !!dryRun, created, skipped, errors: errors.slice(0, 50) });
+    return NextResponse.json({ ok: true, dryRun: !!dryRun, created, skipped, errors: errors.slice(0, 50), preview: preview.slice(0, 500) });
   } catch (error) {
     console.error("CSV import error:", error);
     return NextResponse.json({ error: "Import failed." }, { status: 500 });

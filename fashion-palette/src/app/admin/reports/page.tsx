@@ -2,9 +2,22 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { DollarSign, ShoppingCart, AlertTriangle, PackageX, CreditCard, RotateCcw } from "lucide-react";
+import { DollarSign, ShoppingCart, AlertTriangle, PackageX, CreditCard, RotateCcw, ShieldAlert } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { ORDER_STATUSES } from "@/lib/constants";
+
+type IntegrityProduct = { id: number; name: string; sku: string; slug: string; basePrice: string; stock: number; publishStatus: string; brand: string | null };
+type IntegrityReport = {
+  lowPriceThreshold: number;
+  totalIssues: number;
+  zeroPrice: IntegrityProduct[];
+  lowPrice: IntegrityProduct[];
+  duplicateSku: { value: string; c: number }[];
+  duplicateSlug: { value: string; c: number }[];
+  missingImages: IntegrityProduct[];
+  missingDescription: IntegrityProduct[];
+  missingStock: IntegrityProduct[];
+};
 
 type Report = {
   sales: { allOrders: number; allRevenue: string; monthOrders: number; monthRevenue: string };
@@ -19,6 +32,11 @@ export default function AdminReportsPage() {
   const { data, isLoading } = useQuery<Report>({
     queryKey: ["admin-reports"],
     queryFn: async () => (await fetch("/api/reports")).json(),
+  });
+
+  const { data: integrity } = useQuery<IntegrityReport>({
+    queryKey: ["admin-data-integrity"],
+    queryFn: async () => (await fetch("/api/admin/data-integrity")).json(),
   });
 
   if (isLoading || !data) return <div className="p-12 text-center text-muted">Loading…</div>;
@@ -64,6 +82,43 @@ export default function AdminReportsPage() {
           </div>
         </Panel>
       </div>
+
+      {/* Data integrity (Final feedback A1) */}
+      {integrity && (
+        <Panel
+          title={
+            <span className="flex items-center gap-2">
+              <ShieldAlert className={cn("w-4 h-4", integrity.totalIssues ? "text-red-600" : "text-success")} />
+              Catalogue data integrity {integrity.totalIssues ? `(${integrity.totalIssues} to review)` : "— all clear"}
+            </span>
+          }
+          className="mb-6"
+        >
+          {integrity.totalIssues === 0 ? (
+            <Empty>No pricing, duplicate, image, description or stock issues found. Safe to launch.</Empty>
+          ) : (
+            <div className="space-y-5">
+              <IntegrityBlock title="Zero / invalid price (never publish)" tone="red" items={integrity.zeroPrice} />
+              <IntegrityBlock title={`Unusually low price — below Rs ${integrity.lowPriceThreshold.toLocaleString("en-PK")} (check source currency)`} tone="amber" items={integrity.lowPrice} showPrice />
+              <IntegrityBlock title="Published but out of stock" tone="amber" items={integrity.missingStock} />
+              <IntegrityBlock title="Missing images" tone="amber" items={integrity.missingImages} />
+              <IntegrityBlock title="Missing description" tone="amber" items={integrity.missingDescription} />
+              {integrity.duplicateSku.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-semibold text-red-600 mb-1">Duplicate SKUs</p>
+                  <p className="text-[12px] text-muted">{integrity.duplicateSku.map((d) => `${d.value} (×${d.c})`).join(", ")}</p>
+                </div>
+              )}
+              {integrity.duplicateSlug.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-semibold text-red-600 mb-1">Duplicate slugs</p>
+                  <p className="text-[12px] text-muted">{integrity.duplicateSlug.map((d) => `${d.value} (×${d.c})`).join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </Panel>
+      )}
 
       {/* Low stock table */}
       <Panel title={`Low stock (${data.lowStock.length})`} className="mb-6">
@@ -119,7 +174,7 @@ function Stat({ icon: Icon, label, value, accent }: { icon: React.ElementType; l
   );
 }
 
-function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+function Panel({ title, children, className }: { title: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("bg-white rounded-lg shadow-sm p-5", className)}>
       <h2 className="text-sm font-semibold mb-4">{title}</h2>
@@ -160,4 +215,42 @@ function ReportTable({ headers, rows }: { headers: string[]; rows: React.ReactNo
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted py-4 text-center">{children}</p>;
+}
+
+function IntegrityBlock({ title, tone, items, showPrice }: { title: string; tone: "red" | "amber"; items: IntegrityProduct[]; showPrice?: boolean }) {
+  if (!items || items.length === 0) return null;
+  const toneCls = tone === "red" ? "text-red-600" : "text-amber-700";
+  return (
+    <div>
+      <p className={cn("text-[13px] font-semibold mb-1.5", toneCls)}>{title} ({items.length})</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[12px] min-w-[480px]">
+          <thead>
+            <tr className="text-left border-b border-border text-[10px] uppercase tracking-wide text-muted">
+              <th className="py-1 pr-3">Product</th>
+              <th className="py-1 pr-3">Brand</th>
+              <th className="py-1 pr-3">SKU</th>
+              {showPrice && <th className="py-1 pr-3">Price</th>}
+              <th className="py-1 pr-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((p) => (
+              <tr key={p.id}>
+                <td className="py-1.5 pr-3"><Link href={`/admin/products/${p.id}/edit`} className="text-accent hover:underline">{p.name}</Link></td>
+                <td className="py-1.5 pr-3">{p.brand || "—"}</td>
+                <td className="py-1.5 pr-3 font-mono text-[11px]">{p.sku}</td>
+                {showPrice && <td className="py-1.5 pr-3 whitespace-nowrap">{formatPrice(p.basePrice)}</td>}
+                <td className="py-1.5 pr-3">
+                  <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", p.publishStatus === "published" ? "bg-red-100 text-red-700" : "bg-surface text-muted")}>
+                    {p.publishStatus}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
