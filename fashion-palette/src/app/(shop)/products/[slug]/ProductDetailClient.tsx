@@ -15,6 +15,7 @@ import StockUrgency from "@/components/shared/StockUrgency";
 import { Scissors } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import InternationalEnquiry from "@/components/product/InternationalEnquiry";
+import NotifyWhenAvailable from "@/components/product/NotifyWhenAvailable";
 import { productEnquiryUrl, stitchingEnquiryUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Product, ProductVariant, Review } from "@/types";
@@ -156,25 +157,25 @@ export default function ProductDetailClient({
                   ? "Out of Stock"
                   : "Add to Cart"}
               </Button>
-              <a
-                href={productEnquiryUrl(productRef)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full"
+              {product.stockQuantity <= 0 ? (
+                // B5: out of stock → collect a back-in-stock alert instead of a
+                // WhatsApp availability enquiry.
+                <div className="flex-1">
+                  <NotifyWhenAvailable productId={product.id} variantId={selectedVariant?.id ?? null} />
+                </div>
+              ) : (
+                <a
+                  href={productEnquiryUrl(productRef)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
                 >
-                  <MessageCircle
-                    className="w-4 h-4 mr-2"
-                    strokeWidth={1.5}
-                  />
-                  {/* Feedback 09: don't imply an out-of-stock item can be ordered */}
-                  {product.stockQuantity <= 0 ? "Availability Enquiry" : "WhatsApp Order"}
-                </Button>
-              </a>
+                  <Button variant="outline" size="lg" className="w-full">
+                    <MessageCircle className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                    WhatsApp Order
+                  </Button>
+                </a>
+              )}
             </div>
 
             {/* B4: Get It Stitched — WhatsApp enquiry for eligible unstitched suits.

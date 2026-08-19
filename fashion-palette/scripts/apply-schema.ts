@@ -109,6 +109,23 @@ async function main() {
     console.log("• order_items.article_code already present");
   }
 
+  // Final feedback B5: back-in-stock subscriptions.
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS \`back_in_stock_subscriptions\` (
+      \`id\` bigint unsigned NOT NULL AUTO_INCREMENT,
+      \`product_id\` int NOT NULL,
+      \`variant_id\` int,
+      \`email\` varchar(255),
+      \`whatsapp\` varchar(20),
+      \`status\` enum('pending','notified','failed','cancelled') NOT NULL DEFAULT 'pending',
+      \`notified_at\` timestamp NULL,
+      \`error_message\` varchar(300),
+      \`created_at\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (\`id\`)
+    )`
+  );
+  console.log("✓ back_in_stock_subscriptions table ensured");
+
   // Final feedback B1: newsletter consent source + unsubscribe timestamp.
   if (!(await columnExists("newsletter_subscribers", "source"))) {
     await pool.query("ALTER TABLE `newsletter_subscribers` ADD `source` varchar(60) NULL");

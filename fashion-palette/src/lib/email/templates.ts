@@ -287,6 +287,27 @@ export function newsletterWelcomeEmail(unsubscribeUrl: string) {
   };
 }
 
+// Final feedback B5: back-in-stock alert. Includes product image, name, price and
+// a direct link. Never promises that stock is reserved.
+export function backInStockEmail(o: { productName: string; productImage: string; price: string; productUrl: string }) {
+  const src = /^https?:\/\//.test(o.productImage) ? o.productImage : `${SITE}${o.productImage.startsWith("/") ? "" : "/"}${o.productImage}`;
+  return {
+    subject: `Back in stock: ${o.productName} — Fashion Palette`,
+    html: layout(
+      "It&rsquo;s back in stock",
+      `<p style="font-size:14px;color:#66636b;">Good news — an item you wanted is available again.</p>
+       <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+         <tr>
+           <td width="72" style="padding-right:12px;vertical-align:top;">${src ? `<img src="${src}" width="64" height="80" alt="${o.productName}" style="display:block;width:64px;height:80px;object-fit:cover;border-radius:4px;border:1px solid #e7e2ec;" />` : ""}</td>
+           <td style="vertical-align:top;font-size:14px;color:#1b1b1f;"><strong>${o.productName}</strong><br/><span style="color:#66636b;">Rs ${o.price}</span></td>
+         </tr>
+       </table>
+       <p style="font-size:12px;color:#66636b;">Stock is limited and is not reserved — order soon to avoid missing out.</p>
+       <p style="margin-top:16px;">${btn(o.productUrl, "View product")}</p>`
+    ),
+  };
+}
+
 export function mfaCodeEmail(code: string) {
   return {
     subject: "Your Fashion Palette login code",

@@ -6,6 +6,7 @@ import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
 import { productWriteError } from "../route";
+import { notifyBackInStock } from "@/lib/back-in-stock";
 
 export async function GET(
   _request: NextRequest,
@@ -99,6 +100,14 @@ export async function PUT(
       where: eq(products.id, productId),
       with: { brand: true, category: true, images: true, variants: true },
     });
+
+    // Final feedback B5: when a product transitions from out-of-stock to
+    // in-stock (and is published), notify pending back-in-stock subscribers.
+    const wasOut = !before || before.stockQuantity <= 0;
+    const nowIn = (data.stockQuantity ?? 0) > 0 && data.publishStatus === "published";
+    if (wasOut && nowIn) {
+      await notifyBackInStock(productId);
+    }
 
     revalidateCatalog(); // reflect visibility/price/stock changes immediately (Feedback 01)
     return NextResponse.json(updated);

@@ -392,6 +392,27 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
   subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
 });
 
+// ─── BACK-IN-STOCK SUBSCRIPTIONS (Final feedback B5) ────
+// A customer asks to be told when a product/variant is back in stock. At least
+// one contact method (email or WhatsApp) is required. Notified once, never
+// promising that stock is reserved.
+export const backInStockSubscriptions = mysqlTable("back_in_stock_subscriptions", {
+  id: serial().primaryKey(),
+  productId: int("product_id").notNull(),
+  variantId: int("variant_id"),
+  email: varchar({ length: 255 }),
+  whatsapp: varchar({ length: 20 }),
+  status: mysqlEnum(["pending", "notified", "failed", "cancelled"]).notNull().default("pending"),
+  notifiedAt: timestamp("notified_at"),
+  errorMessage: varchar("error_message", { length: 300 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const backInStockSubscriptionsRelations = relations(backInStockSubscriptions, ({ one }) => ({
+  product: one(products, { fields: [backInStockSubscriptions.productId], references: [products.id] }),
+  variant: one(productVariants, { fields: [backInStockSubscriptions.variantId], references: [productVariants.id] }),
+}));
+
 // ─── WISHLISTS ──────────────────────────────────────────
 export const wishlists = mysqlTable("wishlists", {
   id: serial().primaryKey(),

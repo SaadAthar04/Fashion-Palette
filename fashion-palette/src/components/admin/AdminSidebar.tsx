@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Layers, Tag, Ticket, Star, Image, Users, BarChart3, Mail, Send, Settings, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, RotateCcw, FolderTree, Layers, Tag, Ticket, Star, Image, Users, BarChart3, Mail, Send, Bell, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,7 @@ const sidebarLinks = [
   { icon: BarChart3, label: "Reports", href: "/admin/reports", roles: ["admin", "order_manager"] },
   { icon: Mail, label: "Email Log", href: "/admin/emails", roles: ["admin"] },
   { icon: Send, label: "Newsletter", href: "/admin/newsletter", roles: ["admin"] },
+  { icon: Bell, label: "Stock Alerts", href: "/admin/back-in-stock", roles: ["admin"] },
   { icon: Users, label: "Users", href: "/admin/users", roles: ["admin"] },
   { icon: Settings, label: "Settings", href: "/admin/settings", roles: ["admin"] },
 ];
