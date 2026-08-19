@@ -14,6 +14,7 @@ import TrustBadges from "@/components/shared/TrustBadges";
 import StockUrgency from "@/components/shared/StockUrgency";
 import { Scissors } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import InternationalEnquiry from "@/components/product/InternationalEnquiry";
 import { productEnquiryUrl, stitchingEnquiryUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Product, ProductVariant, Review } from "@/types";
@@ -192,6 +193,11 @@ export default function ProductDetailClient({
                 </Button>
               </a>
             )}
+
+            {/* B9: international ordering via WhatsApp enquiry */}
+            <div className="pt-1">
+              <InternationalEnquiry product={productRef} />
+            </div>
 
             {/* What's included (Feedback 08) */}
             <div className="pt-4 text-[12px] text-muted leading-relaxed">
