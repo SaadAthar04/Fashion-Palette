@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { eq, and, isNotNull, gt } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProductGrid from "@/components/product/ProductGrid";
 
@@ -20,7 +20,8 @@ export default async function SalePage() {
     where: and(
       isNotNull(products.salePrice),
       eq(products.isActive, true),
-      eq(products.publishStatus, "published")
+      eq(products.publishStatus, "published"),
+      gt(products.basePrice, "0")
     ),
     with: { brand: true, images: true },
   });

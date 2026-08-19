@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products, brands, categories, collections } from "@/lib/db/schema";
-import { and, or, like, eq, inArray, desc } from "drizzle-orm";
+import { and, or, like, eq, inArray, desc, gt } from "drizzle-orm";
 
 // Feedback 13: search by title, brand, product code, category, collection.
 // Returns grouped results ({ products, brands, categories }) so the same route
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     where: and(
       eq(products.isActive, true),
       eq(products.publishStatus, "published"),
+      gt(products.basePrice, "0"),
       or(...conditions)
     ),
     with: { brand: true, images: true },

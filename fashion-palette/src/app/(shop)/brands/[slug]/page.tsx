@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { brands, products } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import CategoryPageClient from "@/app/(shop)/categories/[slug]/CategoryPageClient";
 
@@ -25,7 +25,8 @@ async function getBrandWithProducts(slug: string) {
     where: and(
       eq(products.brandId, brand.id),
       eq(products.isActive, true),
-      eq(products.publishStatus, "published")
+      eq(products.publishStatus, "published"),
+      gt(products.basePrice, "0")
     ),
     with: {
       brand: true,

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProductGrid from "@/components/product/ProductGrid";
 
@@ -18,7 +18,8 @@ export default async function NewArrivalsPage() {
     where: and(
       eq(products.isNewArrival, true),
       eq(products.isActive, true),
-      eq(products.publishStatus, "published")
+      eq(products.publishStatus, "published"),
+      gt(products.basePrice, "0")
     ),
     with: {
       brand: true,

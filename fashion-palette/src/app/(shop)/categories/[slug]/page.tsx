@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { categories, brands, products } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import CategoryPageClient from "./CategoryPageClient";
 
 export const revalidate = 300; // ISR: cache 5 min (public catalog)
@@ -24,7 +24,8 @@ async function getCategoryData(slug: string) {
       where: and(
         eq(products.categoryId, category.id),
         eq(products.isActive, true),
-        eq(products.publishStatus, "published")
+        eq(products.publishStatus, "published"),
+        gt(products.basePrice, "0")
       ),
       with: {
         brand: true,

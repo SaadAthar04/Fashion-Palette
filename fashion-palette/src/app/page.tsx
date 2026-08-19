@@ -2,7 +2,7 @@ export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
 import { db } from "@/lib/db";
 import { products, brands, categories } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 import HeroBanner from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
 import NewArrivals from "@/components/home/NewArrivals";
@@ -18,7 +18,7 @@ async function getHomeData() {
     db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.sortOrder),
     db.select().from(brands).where(eq(brands.isActive, true)).orderBy(brands.name),
     db.query.products.findMany({
-      where: and(eq(products.isActive, true), eq(products.publishStatus, "published")),
+      where: and(eq(products.isActive, true), eq(products.publishStatus, "published"), gt(products.basePrice, "0")),
       with: { brand: true, images: true },
       orderBy: [desc(products.createdAt)],
     }),

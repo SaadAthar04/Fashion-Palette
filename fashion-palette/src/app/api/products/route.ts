@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products, productImages, productVariants, auditLog } from "@/lib/db/schema";
-import { eq, and, or, like, desc, asc, count } from "drizzle-orm";
+import { eq, and, or, like, desc, asc, count, gt } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
   if (!isStaff) {
     conditions.push(eq(products.isActive, true));
     conditions.push(eq(products.publishStatus, "published"));
+    conditions.push(gt(products.basePrice, "0")); // A1: never surface invalid-price products publicly
   }
   if (category) conditions.push(eq(products.categoryId, parseInt(category)));
   if (brand) conditions.push(eq(products.brandId, parseInt(brand)));
