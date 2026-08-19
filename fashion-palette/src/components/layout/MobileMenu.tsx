@@ -17,6 +17,7 @@ interface MobileMenuProps {
 export default function MobileMenu({ isOpen, onClose, brands = [] }: MobileMenuProps) {
   const { data: session } = useSession();
   const [brandsExpanded, setBrandsExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Menu" side="left">
@@ -65,6 +66,47 @@ export default function MobileMenu({ isOpen, onClose, brands = [] }: MobileMenuP
                       >
                         View all brands →
                       </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            const submenu = "submenu" in link ? link.submenu : undefined;
+            if (submenu) {
+              // B4: tap the label to open the catalogue; tap the chevron to
+              // reveal Prints / Embroidered. Works by tap on mobile.
+              const open = expanded === link.href;
+              return (
+                <div key={link.href}>
+                  <div className="flex items-center">
+                    <Link
+                      href={link.href}
+                      onClick={onClose}
+                      className="flex-1 px-6 py-4 text-[12px] font-medium uppercase tracking-[0.15em] hover:bg-surface hover:text-accent transition-colors duration-300"
+                    >
+                      {link.label}
+                    </Link>
+                    <button
+                      onClick={() => setExpanded(open ? null : link.href)}
+                      aria-label={`${open ? "Collapse" : "Expand"} ${link.label}`}
+                      aria-expanded={open}
+                      className="px-5 py-4 text-muted/60 hover:text-accent"
+                    >
+                      <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                  {open && (
+                    <div className="bg-surface/50">
+                      {submenu.map((s) => (
+                        <Link
+                          key={s.href}
+                          href={s.href}
+                          onClick={onClose}
+                          className="block pl-10 pr-6 py-2.5 text-[12px] tracking-wide text-primary/80 hover:text-accent transition-colors"
+                        >
+                          {s.label}
+                        </Link>
+                      ))}
                     </div>
                   )}
                 </div>

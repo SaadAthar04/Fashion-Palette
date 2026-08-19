@@ -16,14 +16,21 @@ export const DEFAULT_DELIVERY_CHARGES = 500;
 // report — but may still be published if an editor deliberately confirms them.
 export const LOW_PRICE_WARNING_PKR = 1000;
 
-// Feedback 01: exact final navigation order. "New Arrivals" stays plural everywhere.
-// Brands opens a mega menu and also has a full All Brands page.
+// Feedback 01 + Final feedback B4: navigation order. "New Arrivals" stays plural.
+// Brands opens a mega menu. Prints & Embroidered are now a submenu under
+// Unstitched (removed as top-level items). Clicking Unstitched opens the
+// catalogue; hover/focus/tap reveals the submenu.
 export const NAV_LINKS = [
   { label: "New Arrivals", href: "/new-arrivals" },
-  { label: "Unstitched", href: "/categories/unstitched" },
+  {
+    label: "Unstitched",
+    href: "/categories/unstitched",
+    submenu: [
+      { label: "Prints", href: "/categories/prints" },
+      { label: "Embroidered", href: "/categories/embroidered" },
+    ],
+  },
   { label: "Brands", href: "/brands", hasMegaMenu: true },
-  { label: "Prints", href: "/categories/prints" },
-  { label: "Embroidered", href: "/categories/embroidered" },
   { label: "Stitching", href: "/stitching" }, // service page, not a product category
 ] as const;
 

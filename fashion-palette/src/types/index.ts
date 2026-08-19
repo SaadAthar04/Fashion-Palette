@@ -47,6 +47,7 @@ export type Product = {
   isActive: boolean;
   stockQuantity: number;
   sku: string;
+  originalProductCode?: string | null;
   metaTitle: string | null;
   metaDescription: string | null;
   createdAt: Date;

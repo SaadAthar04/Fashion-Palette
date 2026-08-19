@@ -12,8 +12,9 @@ import RelatedProducts from "@/components/product/RelatedProducts";
 import ReviewSection from "@/components/product/ReviewSection";
 import TrustBadges from "@/components/shared/TrustBadges";
 import StockUrgency from "@/components/shared/StockUrgency";
+import { Scissors } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import { getWhatsAppUrl } from "@/lib/utils";
+import { productEnquiryUrl, stitchingEnquiryUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Product, ProductVariant, Review } from "@/types";
 
@@ -47,6 +48,14 @@ export default function ProductDetailClient({
   const handleAddToCart = () => {
     addItem(product, selectedVariant, quantity);
   };
+
+  // B4/B9: structured WhatsApp enquiries carry the product name, article code and link.
+  const productRef = {
+    name: product.name,
+    slug: product.slug,
+    articleCode: product.originalProductCode || product.sku,
+  };
+  const isUnstitched = product.stitchType === "unstitched";
 
   const tabs = [
     { id: "description" as const, label: "Description" },
@@ -147,7 +156,7 @@ export default function ProductDetailClient({
                   : "Add to Cart"}
               </Button>
               <a
-                href={getWhatsAppUrl(product.name)}
+                href={productEnquiryUrl(productRef)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1"
@@ -166,6 +175,23 @@ export default function ProductDetailClient({
                 </Button>
               </a>
             </div>
+
+            {/* B4: Get It Stitched — WhatsApp enquiry for eligible unstitched suits.
+                The 'Unstitched' product variant/status keeps its name; this is a
+                separate action. Checkout stitching is not offered yet. */}
+            {isUnstitched && (
+              <a
+                href={stitchingEnquiryUrl(productRef)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button variant="outline" size="lg" className="w-full">
+                  <Scissors className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Get It Stitched on WhatsApp
+                </Button>
+              </a>
+            )}
 
             {/* What's included (Feedback 08) */}
             <div className="pt-4 text-[12px] text-muted leading-relaxed">

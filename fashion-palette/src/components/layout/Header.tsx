@@ -19,6 +19,7 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
   const { data: session } = useSession();
   const { isOpen: cartOpen, openCart, closeCart, getItemCount } = useCart();
   // Final feedback A6: avoid a hydration mismatch (and the resulting signed-in /
@@ -76,6 +77,7 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
             <nav className="hidden lg:flex items-center gap-10">
               {NAV_LINKS.map((link) => {
                 const hasMega = "hasMegaMenu" in link && link.hasMegaMenu;
+                const submenu = "submenu" in link ? link.submenu : undefined;
                 const linkClass = cn(
                   "text-[11px] font-medium tracking-[0.18em] uppercase text-primary/80 hover:text-accent transition-colors duration-300 relative py-1",
                   "after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-accent after:transition-all after:duration-500 hover:after:w-full"
@@ -91,6 +93,38 @@ export default function Header({ brands = [] }: { brands?: MenuBrand[] }) {
                       <Link href={link.href} className={linkClass} aria-haspopup="true" aria-expanded={megaOpen}>
                         {link.label}
                       </Link>
+                    </div>
+                  );
+                }
+                if (submenu) {
+                  const open = submenuOpen === link.href;
+                  return (
+                    <div
+                      key={link.href}
+                      className="relative"
+                      onMouseEnter={() => setSubmenuOpen(link.href)}
+                      onMouseLeave={() => setSubmenuOpen(null)}
+                      onFocus={() => setSubmenuOpen(link.href)}
+                      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSubmenuOpen(null); }}
+                    >
+                      <Link href={link.href} className={linkClass} aria-haspopup="true" aria-expanded={open}>
+                        {link.label}
+                      </Link>
+                      {open && (
+                        <div className="absolute left-0 top-full pt-3 z-40">
+                          <div className="min-w-[180px] bg-white border border-border shadow-[0_16px_32px_-20px_rgba(0,0,0,0.25)] py-2 animate-fade-in-down">
+                            {submenu.map((s) => (
+                              <Link
+                                key={s.href}
+                                href={s.href}
+                                className="block px-5 py-2.5 text-[12px] tracking-wide text-primary/80 hover:text-accent hover:bg-surface transition-colors"
+                              >
+                                {s.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 }
