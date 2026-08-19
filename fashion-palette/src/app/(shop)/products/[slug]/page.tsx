@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { products, reviews, users } from "@/lib/db/schema";
-import { eq, and, ne, desc, gt } from "drizzle-orm";
+import { eq, and, ne, desc, gt, or } from "drizzle-orm";
 import ProductDetailClient from "./ProductDetailClient";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
@@ -69,21 +69,49 @@ async function getProductReviews(productId: number) {
   }));
 }
 
-async function getRelatedProducts(productId: number, categoryId: number) {
-  const related = await db.query.products.findMany({
+// Final feedback A4: recommend by relevant attributes (same brand, collection,
+// fabric, category or price range) rather than category alone.
+async function getRelatedProducts(current: {
+  id: number;
+  categoryId: number;
+  brandId: number;
+  collectionId: number | null;
+  fabric: string | null;
+  basePrice: string;
+}) {
+  // Candidate pool: same category, brand or collection (a wider net than category).
+  const candidates = await db.query.products.findMany({
     where: and(
-      eq(products.categoryId, categoryId),
       eq(products.isActive, true),
       eq(products.publishStatus, "published"),
-      ne(products.id, productId)
+      gt(products.basePrice, "0"),
+      ne(products.id, current.id),
+      or(
+        eq(products.categoryId, current.categoryId),
+        eq(products.brandId, current.brandId),
+        current.collectionId ? eq(products.collectionId, current.collectionId) : undefined
+      )
     ),
-    with: {
-      brand: true,
-      images: true,
-    },
-    limit: 4,
+    with: { brand: true, images: true },
+    limit: 40,
   });
-  return related;
+
+  const basePrice = parseFloat(current.basePrice) || 0;
+  const scored = candidates
+    .map((p) => {
+      let score = 0;
+      if (current.collectionId && p.collectionId === current.collectionId) score += 5;
+      if (p.brandId === current.brandId) score += 4;
+      if (p.categoryId === current.categoryId) score += 3;
+      if (current.fabric && p.fabric && p.fabric.toLowerCase() === current.fabric.toLowerCase()) score += 2;
+      // Price proximity (within 30% of the current price).
+      const price = parseFloat(p.basePrice) || 0;
+      if (basePrice > 0 && Math.abs(price - basePrice) <= basePrice * 0.3) score += 1;
+      return { p, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, 4).map((s) => s.p);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -119,7 +147,14 @@ export default async function ProductPage({ params }: Props) {
 
   const [productReviews, relatedProducts] = await Promise.all([
     getProductReviews(product.id),
-    getRelatedProducts(product.id, product.categoryId),
+    getRelatedProducts({
+      id: product.id,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
+      collectionId: product.collectionId,
+      fabric: product.fabric,
+      basePrice: product.basePrice,
+    }),
   ]);
 
   const avgRating =

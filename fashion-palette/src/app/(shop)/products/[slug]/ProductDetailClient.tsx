@@ -59,9 +59,12 @@ export default function ProductDetailClient({
   };
   const isUnstitched = product.stitchType === "unstitched";
 
+  // A4: only show the ready-to-wear size chart when the product genuinely has
+  // sizes (stitched / ready-to-wear). Unstitched suits don't get an RTW size guide.
+  const hasSizes = (product.variants ?? []).some((v) => !!v.size);
   const tabs = [
     { id: "description" as const, label: "Description" },
-    { id: "size-guide" as const, label: "Size Guide" },
+    ...(hasSizes ? [{ id: "size-guide" as const, label: "Size Guide" }] : []),
     {
       id: "reviews" as const,
       label: `Reviews (${reviews.filter((r) => r.isApproved).length})`,
