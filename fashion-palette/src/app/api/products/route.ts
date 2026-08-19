@@ -7,6 +7,7 @@ import { eq, and, or, like, desc, asc, count } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { z } from "zod";
 
 const STAFF_ROLES = ["admin", "catalogue_editor", "order_manager"];
@@ -106,6 +107,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = productSchema.parse(body);
     const { ...productData } = data;
+    // B3: sanitize rich-text HTML before storing (strip scripts/handlers/styling).
+    productData.description = sanitizeHtml(productData.description);
 
     const [result] = await db.insert(products).values(productData).$returningId();
     const productId = result.id;

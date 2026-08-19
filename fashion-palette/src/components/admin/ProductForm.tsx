@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { X, Plus, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+import StructuredDetails, { EMPTY_DETAILS, type ProductDetails } from "@/components/admin/StructuredDetails";
 import { slugify } from "@/lib/utils";
 import { PRODUCT_FABRICS, PRODUCT_OCCASIONS, PRODUCT_SIZES } from "@/lib/constants";
 import { toast } from "sonner";
@@ -45,7 +47,7 @@ type ProductFormData = {
 
 interface ProductFormProps {
   // Partial so edit-mode can pass a subset; the form merges with defaults.
-  initialData?: Partial<ProductFormData> & { images?: ImageItem[]; variants?: VariantItem[] };
+  initialData?: Partial<ProductFormData> & { images?: ImageItem[]; variants?: VariantItem[]; details?: ProductDetails | null };
   productId?: number;
 }
 
@@ -77,6 +79,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
 
   const [images, setImages] = useState<ImageItem[]>(initialData?.images || []);
   const [variants, setVariants] = useState<VariantItem[]>(initialData?.variants || []);
+  const [details, setDetails] = useState<ProductDetails>({ ...EMPTY_DETAILS, ...(initialData?.details ?? {}) });
 
   const { data: brandsData } = useQuery({
     queryKey: ["brands-list"],
@@ -172,6 +175,8 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
         stitchType: form.stitchType || null,
         workType: form.workType || null,
         pieceCount: form.pieceCount || null,
+        // B3: structured details; drop empty sections so we store null when unused.
+        details: (details.included.length || details.components.length || details.care.length || details.disclaimers.length) ? details : null,
         images,
         variants,
       };
@@ -209,12 +214,16 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
             <h3 className="font-semibold">Basic Information</h3>
             <Input label="Product Name" id="name" value={form.name} onChange={(e) => { updateField("name", e.target.value); if (!productId) updateField("slug", slugify(e.target.value)); }} required />
             <Input label="Slug" id="slug" value={form.slug} onChange={(e) => updateField("slug", e.target.value)} required />
+            <Input label="Short Description (editorial summary)" id="shortDescription" value={form.shortDescription} onChange={(e) => updateField("shortDescription", e.target.value)} placeholder="One or two lines shown above the fold" />
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Description</label>
-              <textarea value={form.description} onChange={(e) => updateField("description", e.target.value)} rows={5} className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent" />
+              {/* B3: safe rich-text editor (sanitized again server-side on save). */}
+              <RichTextEditor value={form.description} onChange={(html) => updateField("description", html)} />
             </div>
-            <Input label="Short Description" id="shortDescription" value={form.shortDescription} onChange={(e) => updateField("shortDescription", e.target.value)} />
           </div>
+
+          {/* B3: Structured details (What's Included, components, care, disclaimers) */}
+          <StructuredDetails value={details} onChange={setDetails} />
 
           {/* Pricing & Stock */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">

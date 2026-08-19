@@ -109,6 +109,14 @@ async function main() {
     console.log("• order_items.article_code already present");
   }
 
+  // Final feedback B3: structured product details JSON.
+  if (!(await columnExists("products", "details"))) {
+    await pool.query("ALTER TABLE `products` ADD `details` json NULL");
+    console.log("✓ products.details added");
+  } else {
+    console.log("• products.details already present");
+  }
+
   // Final feedback B5: back-in-stock subscriptions.
   await pool.query(
     `CREATE TABLE IF NOT EXISTS \`back_in_stock_subscriptions\` (

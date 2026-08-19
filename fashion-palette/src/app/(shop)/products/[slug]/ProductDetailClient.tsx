@@ -16,6 +16,7 @@ import { Scissors } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import InternationalEnquiry from "@/components/product/InternationalEnquiry";
 import NotifyWhenAvailable from "@/components/product/NotifyWhenAvailable";
+import ProductStructuredDetails from "@/components/product/ProductStructuredDetails";
 import { productEnquiryUrl, stitchingEnquiryUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Product, ProductVariant, Review } from "@/types";
@@ -253,22 +254,20 @@ export default function ProductDetailClient({
 
           <div className="py-10">
             {activeTab === "description" && (
-              <div className="max-w-3xl">
+              <div className="max-w-3xl space-y-8">
                 {product.description ? (
                   <div
-                    className="prose prose-sm max-w-none text-muted [&_h3]:text-primary [&_h3]:font-semibold [&_h3]:text-sm [&_h3]:tracking-wide [&_h3]:uppercase [&_ul]:list-disc [&_ul]:pl-5 [&_p]:leading-[1.8] [&_p]:text-[13px]"
-                    dangerouslySetInnerHTML={{
-                      __html: product.description.replace(
-                        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-                        ""
-                      ),
-                    }}
+                    className="prose prose-sm max-w-none text-muted [&_h2]:text-primary [&_h2]:font-semibold [&_h2]:text-base [&_h3]:text-primary [&_h3]:font-semibold [&_h3]:text-sm [&_h3]:tracking-wide [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.8] [&_p]:text-[13px]"
+                    // Already sanitized server-side on save (B3).
+                    dangerouslySetInnerHTML={{ __html: product.description }}
                   />
-                ) : (
+                ) : product.shortDescription ? (
                   <p className="text-[13px] text-muted leading-[1.8] font-light">
                     {product.shortDescription}
                   </p>
-                )}
+                ) : null}
+
+                <ProductStructuredDetails details={product.details} />
               </div>
             )}
 

@@ -40,6 +40,7 @@ export type Product = {
   season?: string | null;
   color?: string | null;
   careInstructions?: string | null;
+  details?: ProductDetailsData | null;
   publishStatus?: string;
   isFeatured: boolean;
   isNewArrival: boolean;
@@ -56,6 +57,14 @@ export type Product = {
   category?: Category;
   images?: ProductImage[];
   variants?: ProductVariant[];
+};
+
+// Final feedback B3: structured product details stored in products.details (JSON).
+export type ProductDetailsData = {
+  included?: { item: string; detail: string }[];
+  components?: { part: string; fabric: string; work: string; length: string; unit: string; notes: string }[];
+  care?: string[];
+  disclaimers?: string[];
 };
 
 export type ProductImage = {

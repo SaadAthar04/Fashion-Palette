@@ -62,6 +62,7 @@ export default function EditProductPage() {
     metaDescription: product.metaDescription || "",
     images: product.images || [],
     variants: product.variants || [],
+    details: product.details || null,
   };
 
   return (

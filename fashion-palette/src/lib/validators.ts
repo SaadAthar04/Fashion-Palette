@@ -83,6 +83,27 @@ export const productSchema = z.object({
   sku: z.string().min(2),
   metaTitle: emptyToNull,
   metaDescription: emptyToNull,
+  // Final feedback B3: structured product details (validated shape, stored as JSON).
+  details: z
+    .object({
+      included: z.array(z.object({ item: z.string(), detail: z.string() })).default([]),
+      components: z
+        .array(
+          z.object({
+            part: z.string(),
+            fabric: z.string(),
+            work: z.string(),
+            length: z.string(),
+            unit: z.string(),
+            notes: z.string(),
+          })
+        )
+        .default([]),
+      care: z.array(z.string()).default([]),
+      disclaimers: z.array(z.string()).default([]),
+    })
+    .nullable()
+    .optional(),
 })
   // Final feedback A1: price integrity. PKR is the only stored base price. A
   // blank/zero/negative base price can never be saved, and such a product can

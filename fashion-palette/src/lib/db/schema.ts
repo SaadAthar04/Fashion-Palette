@@ -11,6 +11,7 @@ import {
   serial,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
+import type { ProductDetailsData } from "@/types";
 
 // ─── BRANDS ─────────────────────────────────────────────
 export const brands = mysqlTable("brands", {
@@ -79,6 +80,12 @@ export const products = mysqlTable("products", {
   dupattaFabric: varchar("dupatta_fabric", { length: 100 }),
   color: varchar({ length: 80 }),
   careInstructions: text("care_instructions"),
+  // Final feedback B3: structured product details (What's Included, component
+  // measurements, care lines, disclaimers) so the storefront shows scannable
+  // sections instead of a copy-pasted wall of text. Shape:
+  // { included: [{item, detail}], components: [{part, fabric, work, length, unit, notes}],
+  //   care: [string], disclaimers: [string] }
+  details: json().$type<ProductDetailsData>(),
   occasion: varchar({ length: 100 }),
   // ── Commerce (Feedback 09) ──
   deliveryEstimate: varchar("delivery_estimate", { length: 120 }),

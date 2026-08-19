@@ -7,6 +7,7 @@ import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
 import { productWriteError } from "../route";
 import { notifyBackInStock } from "@/lib/back-in-stock";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export async function GET(
   _request: NextRequest,
@@ -38,6 +39,8 @@ export async function PUT(
   try {
     const body = await request.json();
     const data = productSchema.parse(body);
+    // B3: sanitize rich-text HTML before storing.
+    data.description = sanitizeHtml(data.description);
 
     // Feedback 16: record which important fields changed (old → new).
     const before = await db.query.products.findFirst({ where: eq(products.id, productId) });
