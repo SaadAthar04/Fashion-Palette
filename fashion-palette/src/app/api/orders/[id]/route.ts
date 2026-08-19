@@ -7,9 +7,13 @@ import { eq, sql, asc } from "drizzle-orm";
 import { requireAdmin } from "@/lib/admin";
 import { sendEmail } from "@/lib/email/mailer";
 import { orderStatusEmail } from "@/lib/email/templates";
+import { sendOrderEmail } from "@/lib/email/order-emails";
+import { buildTrackingUrl, isCourierKey, isValidTrackingNumber, normalizeTrackingNumber } from "@/lib/courier";
 
-// Statuses that warrant a customer email (Feedback 20).
-const NOTIFY_STATUSES = ["confirmed", "processing", "shipped", "delivered", "cancelled", "return_requested", "returned", "refunded"];
+// Statuses handled by the rich order emails (Final feedback B7).
+const RICH_EMAIL_STATUS: Record<string, "accepted" | "shipped"> = { confirmed: "accepted", shipped: "shipped" };
+// Other statuses that still warrant a simple customer email (Feedback 20).
+const NOTIFY_STATUSES = ["processing", "delivered", "cancelled", "return_requested", "returned", "refunded"];
 
 // Statuses whose entry means the stock should be returned (Feedback 19).
 const STOCK_RESTORE_STATUSES = ["cancelled", "returned", "refunded"];
@@ -66,18 +70,49 @@ export async function PATCH(
 
   const updateData: Record<string, unknown> = {};
   if (body.status) updateData.status = body.status;
-  if (body.trackingNumber !== undefined) updateData.trackingNumber = body.trackingNumber;
-  if (body.courier !== undefined) updateData.courier = body.courier;
   if (body.paymentStatus) updateData.paymentStatus = body.paymentStatus;
   if (body.paymentReference !== undefined) updateData.paymentReference = body.paymentReference;
   if (body.notes !== undefined) updateData.notes = body.notes;
   if (body.isTest !== undefined) updateData.isTest = !!body.isTest; // A6: flag/unflag test order
 
-  if (Object.keys(updateData).length === 0) {
-    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  const statusChanged = !!body.status && body.status !== current.status;
+  const isShippingNow = statusChanged && body.status === "shipped";
+
+  // ── Courier & tracking (Final feedback B8) ──
+  // Admin enters only a tracking number + picks a courier; we build the URL.
+  const courierKey = body.courier !== undefined ? body.courier : current.courier;
+  const trackingNum = body.trackingNumber !== undefined ? body.trackingNumber : current.trackingNumber;
+  let trackingChanged = false;
+
+  // Marking an order Shipped requires BOTH a known courier and a valid tracking number.
+  if (isShippingNow && (!isCourierKey(courierKey) || !isValidTrackingNumber(trackingNum))) {
+    return NextResponse.json(
+      { error: "Select a courier and enter a valid tracking number before marking the order as shipped." },
+      { status: 400 }
+    );
   }
 
-  const statusChanged = !!body.status && body.status !== current.status;
+  if (body.courier !== undefined || body.trackingNumber !== undefined || isShippingNow) {
+    if (isCourierKey(courierKey) && isValidTrackingNumber(trackingNum)) {
+      const url = buildTrackingUrl(courierKey, trackingNum);
+      const normTracking = normalizeTrackingNumber(trackingNum);
+      updateData.courier = courierKey;
+      updateData.trackingNumber = normTracking;
+      updateData.trackingUrl = url;
+      trackingChanged = url !== current.trackingUrl || normTracking !== current.trackingNumber || courierKey !== current.courier;
+    } else if (body.courier !== undefined || body.trackingNumber !== undefined) {
+      // Allow saving partial courier/tracking on a not-yet-shipped order.
+      if (body.courier !== undefined) updateData.courier = body.courier || null;
+      if (body.trackingNumber !== undefined) updateData.trackingNumber = normalizeTrackingNumber(body.trackingNumber) || null;
+    }
+  }
+
+  // Explicit "resend shipment email" after a tracking correction (never auto).
+  const resendShipment = !!body.resendShipmentEmail && current.status === "shipped";
+
+  if (Object.keys(updateData).length === 0 && !resendShipment) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  }
   const shouldRestoreStock =
     statusChanged &&
     STOCK_RESTORE_STATUSES.includes(body.status) &&
@@ -112,18 +147,27 @@ export async function PATCH(
       }
     }
 
-    // Feedback 22/28: audit important order changes.
+    // Feedback 22/28: audit important order changes (incl. tracking corrections).
     await tx.insert(auditLog).values({
       actorUserId: staffId,
-      action: statusChanged ? "order.status_change" : "order.update",
+      action: statusChanged ? "order.status_change" : trackingChanged ? "order.tracking_update" : "order.update",
       entityType: "order",
       entityId: String(orderId),
-      meta: { from: current.status, to: body.status ?? current.status, restoredStock: shouldRestoreStock },
+      meta: {
+        from: current.status,
+        to: body.status ?? current.status,
+        restoredStock: shouldRestoreStock,
+        ...(trackingChanged ? { courier: updateData.courier, trackingNumber: updateData.trackingNumber, trackingUrl: updateData.trackingUrl } : {}),
+      },
     });
   });
 
-  // Feedback 20: notify the customer on meaningful status changes (never blocks).
-  if (statusChanged && NOTIFY_STATUSES.includes(body.status)) {
+  // Customer notifications (never block the response). Runs AFTER the commit so
+  // the rich emails read the freshly-stored courier/tracking/totals.
+  if (statusChanged && RICH_EMAIL_STATUS[body.status]) {
+    // Order accepted (confirmed) → email 2; Order shipped → email 3 (auto, once).
+    await sendOrderEmail(orderId, RICH_EMAIL_STATUS[body.status]);
+  } else if (statusChanged && NOTIFY_STATUSES.includes(body.status)) {
     let email = current.guestEmail;
     let name = (current.shippingAddressJson as { fullName?: string } | null)?.fullName;
     if (!email && current.userId) {
@@ -132,9 +176,14 @@ export async function PATCH(
       name = name ?? u?.name;
     }
     if (email) {
-      const mail = orderStatusEmail(current.orderNumber, body.status, name ?? undefined, body.courier, body.trackingNumber);
+      const mail = orderStatusEmail(current.orderNumber, body.status, name ?? undefined);
       await sendEmail({ to: email, template: `order_${body.status}`, subject: mail.subject, html: mail.html, relatedOrderId: orderId });
     }
+  }
+
+  // Explicit resend of the shipment email after a tracking correction (B8).
+  if (resendShipment) {
+    await sendOrderEmail(orderId, "shipped");
   }
 
   const updated = await db.query.orders.findFirst({

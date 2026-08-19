@@ -93,6 +93,22 @@ async function main() {
     console.log("• orders.is_test already present");
   }
 
+  // Final feedback B8: stored full tracking URL (generated from courier + number).
+  if (!(await columnExists("orders", "tracking_url"))) {
+    await pool.query("ALTER TABLE `orders` ADD `tracking_url` varchar(500) NULL");
+    console.log("✓ orders.tracking_url added");
+  } else {
+    console.log("• orders.tracking_url already present");
+  }
+
+  // Final feedback B7: snapshot article code on each order line.
+  if (!(await columnExists("order_items", "article_code"))) {
+    await pool.query("ALTER TABLE `order_items` ADD `article_code` varchar(120) NULL");
+    console.log("✓ order_items.article_code added");
+  } else {
+    console.log("• order_items.article_code already present");
+  }
+
   await pool.end();
   console.log("✅ apply-schema complete");
   process.exit(0);

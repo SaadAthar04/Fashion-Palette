@@ -269,6 +269,8 @@ export const orders = mysqlTable("orders", {
   guestPhone: varchar("guest_phone", { length: 20 }),
   courier: varchar({ length: 100 }),
   trackingNumber: varchar("tracking_number", { length: 100 }),
+  // Final feedback B8: full tracking URL generated from courier + tracking number.
+  trackingUrl: varchar("tracking_url", { length: 500 }),
   notes: text(),
   // Final feedback A6: orders flagged as test are excluded from dashboard
   // revenue/order statistics so QA/test activity never skews the numbers.
@@ -294,6 +296,9 @@ export const orderItems = mysqlTable("order_items", {
   variantId: int("variant_id"),
   productName: varchar("product_name", { length: 500 }).notNull(),
   productImage: varchar("product_image", { length: 500 }).notNull(),
+  // Final feedback B7: snapshot the article code so order emails/invoices show a
+  // stable reference even if the product's SKU later changes.
+  articleCode: varchar("article_code", { length: 120 }),
   size: varchar({ length: 20 }),
   color: varchar({ length: 50 }),
   quantity: int().notNull(),

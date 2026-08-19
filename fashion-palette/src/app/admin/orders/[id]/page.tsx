@@ -8,6 +8,7 @@ import { eq, asc } from "drizzle-orm";
 import { formatPrice, cn, getImageUrl } from "@/lib/utils";
 import { ORDER_STATUSES } from "@/lib/constants";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
+import OrderEmailActions from "@/components/admin/OrderEmailActions";
 
 export const dynamic = "force-dynamic";
 
@@ -154,10 +155,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             orderId={order.id}
             currentStatus={order.status}
             currentPaymentStatus={order.paymentStatus}
+            currentCourier={order.courier || ""}
             currentTrackingNumber={order.trackingNumber || ""}
             currentNotes={order.notes || ""}
             currentIsTest={order.isTest}
           />
+
+          <OrderEmailActions orderId={order.id} />
         </div>
       </div>
     </div>

@@ -8,7 +8,6 @@ import {
   orderStatusHistory,
   products,
   productVariants,
-  productImages,
   users,
   coupons,
 } from "@/lib/db/schema";
@@ -17,7 +16,8 @@ import { checkoutSchema } from "@/lib/validators";
 import { generateOrderNumber } from "@/lib/utils";
 import { getDeliveryConfig } from "@/lib/settings";
 import { sendEmail } from "@/lib/email/mailer";
-import { orderReceivedEmail, adminNewOrderEmail, adminLowStockEmail } from "@/lib/email/templates";
+import { adminNewOrderEmail, adminLowStockEmail } from "@/lib/email/templates";
+import { sendOrderEmail } from "@/lib/email/order-emails";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const STAFF_ROLES = ["admin", "order_manager"];
@@ -166,6 +166,7 @@ export async function POST(request: Request) {
       variantId: number | null;
       productName: string;
       productImage: string;
+      articleCode: string | null;
       brand: string | null;
       size: string | null;
       color: string | null;
@@ -204,6 +205,7 @@ export async function POST(request: Request) {
         variantId: variant?.id ?? null,
         productName: p.name,
         productImage: primary?.imageUrl ?? "",
+        articleCode: p.originalProductCode || p.sku || null,
         brand: p.brand?.name ?? null,
         size: variant?.size ?? null,
         color: variant?.color ?? null,
@@ -298,6 +300,7 @@ export async function POST(request: Request) {
           variantId: i.variantId,
           productName: i.productName,
           productImage: i.productImage,
+          articleCode: i.articleCode,
           size: i.size,
           color: i.color,
           quantity: i.quantity,
@@ -337,23 +340,9 @@ export async function POST(request: Request) {
       return newOrderId;
     });
 
-    // Feedback 20: order-received email goes to the checkout contact email.
-    const customerEmail = data.email;
-    if (customerEmail) {
-      const mail = orderReceivedEmail({
-        orderNumber,
-        total: total.toFixed(2),
-        paymentMethod: data.paymentMethod,
-        customerName: data.shippingAddress.fullName,
-        items: validated.map((i) => ({
-          productName: i.productName,
-          quantity: i.quantity,
-          size: i.size,
-          totalPrice: (i.unitPrice * i.quantity).toFixed(2),
-        })),
-      });
-      await sendEmail({ to: customerEmail, template: "order_received", subject: mail.subject, html: mail.html, relatedOrderId: orderId });
-    }
+    // Feedback 20 / Final feedback B7: order-received email (full summary +
+    // thumbnails + secure "View or Cancel Order" link) to the checkout contact.
+    await sendOrderEmail(orderId, "received");
 
     // Feedback 20: admin new-order notification.
     const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_REPLY_TO;
