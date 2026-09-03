@@ -17,6 +17,8 @@
     "db:clean-catalogue": "tsx scripts/clean-catalogue.ts",
     "db:unpublish-bad-prices": "tsx scripts/unpublish-bad-prices.ts",
     "db:curate-catalogue": "tsx scripts/curate-catalogue.ts",
+    "db:mark-test-orders": "tsx scripts/mark-test-orders.ts",
+    "db:reset-new-arrivals": "tsx scripts/reset-new-arrivals.ts",
     "db:apply-schema": "tsx scripts/apply-schema.ts"
   },
   "dependencies": {

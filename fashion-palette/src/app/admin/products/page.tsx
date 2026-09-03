@@ -13,6 +13,7 @@ import { toast } from "sonner";
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<number[]>([]);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
 
@@ -40,6 +41,51 @@ export default function AdminProductsPage() {
 
   const products = data?.products || [];
   const pagination = data?.pagination || { page: 1, totalPages: 1, total: 0 };
+  const pageIds: number[] = products.map((p: { id: number }) => p.id);
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const toggleOne = (id: number) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleAllOnPage = () =>
+    setSelected((prev) => (allOnPageSelected ? prev.filter((id) => !pageIds.includes(id)) : [...new Set([...prev, ...pageIds])]));
+
+  // A1: bulk New Arrival / publish actions on the current selection.
+  const bulkFlag = useMutation({
+    mutationFn: async ({ value }: { value: boolean }) => {
+      const res = await fetch("/api/products/bulk-flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected, flag: "isNewArrival", value }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed");
+      return d as { affected: number; value: boolean };
+    },
+    onSuccess: (d) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setSelected([]);
+      toast.success(`${d.value ? "Marked" : "Unmarked"} ${d.affected} product${d.affected === 1 ? "" : "s"} as New Arrival`);
+    },
+    onError: () => toast.error("Bulk update failed"),
+  });
+
+  const bulkPublish = useMutation({
+    mutationFn: async ({ status }: { status: "published" | "draft" }) => {
+      const res = await fetch("/api/products/bulk-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, ids: selected }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed");
+      return d as { affected: number; status: string };
+    },
+    onSuccess: (d) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setSelected([]);
+      toast.success(`${d.status === "published" ? "Published" : "Unpublished"} ${d.affected} product${d.affected === 1 ? "" : "s"}`);
+    },
+    onError: () => toast.error("Bulk update failed"),
+  });
 
   const publishAll = useMutation({
     mutationFn: async () => {
@@ -104,6 +150,19 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
+      {selected.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-lg px-4 py-3">
+          <span className="text-sm font-medium">{selected.length} selected</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" isLoading={bulkFlag.isPending} onClick={() => bulkFlag.mutate({ value: true })}>Mark New Arrival</Button>
+            <Button size="sm" variant="outline" isLoading={bulkFlag.isPending} onClick={() => bulkFlag.mutate({ value: false })}>Unmark New Arrival</Button>
+            <Button size="sm" variant="outline" isLoading={bulkPublish.isPending} onClick={() => bulkPublish.mutate({ status: "published" })}>Publish</Button>
+            <Button size="sm" variant="outline" isLoading={bulkPublish.isPending} onClick={() => bulkPublish.mutate({ status: "draft" })}>Unpublish</Button>
+          </div>
+          <button onClick={() => setSelected([])} className="text-xs text-muted hover:text-primary ml-auto">Clear selection</button>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
         {isLoading ? (
           <div className="p-12 text-center text-muted">Loading...</div>
@@ -111,6 +170,9 @@ export default function AdminProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left">
+                <th className="p-4 w-10">
+                  <input type="checkbox" checked={allOnPageSelected} onChange={toggleAllOnPage} aria-label="Select all on page" className="rounded" />
+                </th>
                 <th className="p-4 font-semibold">Product</th>
                 <th className="p-4 font-semibold">SKU</th>
                 <th className="p-4 font-semibold">Brand</th>
@@ -122,7 +184,7 @@ export default function AdminProductsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {products.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-muted">No products found</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted">No products found</td></tr>
               ) : (
                 products.map((product: Record<string, unknown>) => {
                   const p = product as { id: number; name: string; sku: string; basePrice: string; salePrice: string | null; stockQuantity: number; isActive: boolean; publishStatus?: string; brand?: { name: string }; images?: { imageUrl: string }[] };
@@ -137,6 +199,9 @@ export default function AdminProductsPage() {
                   const primaryImage = p.images?.[0]?.imageUrl;
                   return (
                     <tr key={p.id} className="hover:bg-surface/50">
+                      <td className="p-4">
+                        <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggleOne(p.id)} aria-label={`Select ${p.name}`} className="rounded" />
+                      </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-12 bg-surface relative overflow-hidden rounded flex-shrink-0">

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
-import { productWriteError } from "../route";
+import { productWriteError, publishGateError } from "../route";
 import { notifyBackInStock } from "@/lib/back-in-stock";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 
@@ -41,6 +41,18 @@ export async function PUT(
     const data = productSchema.parse(body);
     // B3: sanitize rich-text HTML before storing.
     data.description = sanitizeHtml(data.description);
+
+    // A2: publish-completeness gate. Use the submitted images when provided,
+    // otherwise the product's existing images (a partial update that flips to
+    // Published must still satisfy the image + alt-text requirement).
+    if (data.publishStatus === "published") {
+      const imagesForGate = body.images
+        ?? (await db.select({ imageUrl: productImages.imageUrl, altText: productImages.altText })
+              .from(productImages)
+              .where(eq(productImages.productId, productId)));
+      const gate = publishGateError(data, imagesForGate);
+      if (gate) return gate;
+    }
 
     // Feedback 16: record which important fields changed (old → new).
     const before = await db.query.products.findFirst({ where: eq(products.id, productId) });

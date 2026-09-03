@@ -13,6 +13,16 @@ function JsonLdScript({ data }: { data: Record<string, unknown> }) {
 }
 
 export function OrganizationJsonLd() {
+  // Phase 2 feedback A7: only include verified, non-null social profiles.
+  // Emitting `sameAs: [null, null, ...]` produces invalid structured data, so
+  // the key is omitted entirely until real profile URLs are configured.
+  const sameAs = [
+    SOCIAL_LINKS.facebook,
+    SOCIAL_LINKS.instagram,
+    SOCIAL_LINKS.tiktok,
+    SOCIAL_LINKS.youtube,
+  ].filter((url): url is string => Boolean(url));
+
   return (
     <JsonLdScript
       data={{
@@ -21,12 +31,7 @@ export function OrganizationJsonLd() {
         name: SITE_NAME,
         url: SITE_URL,
         logo: `${SITE_URL}/images/logo.png`,
-        sameAs: [
-          SOCIAL_LINKS.facebook,
-          SOCIAL_LINKS.instagram,
-          SOCIAL_LINKS.tiktok,
-          SOCIAL_LINKS.youtube,
-        ],
+        ...(sameAs.length > 0 ? { sameAs } : {}),
         contactPoint: {
           "@type": "ContactPoint",
           telephone: "+92-327-679-6087",

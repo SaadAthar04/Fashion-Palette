@@ -48,7 +48,7 @@ const sections: PolicySection[] = [
       },
       { h3: "2.3 Courier" },
       {
-        p: "Fashion Palette normally uses PostEx for delivery within Pakistan, but may use another suitable courier where operationally necessary.",
+        p: "Fashion Palette delivers within Pakistan through established couriers such as Leopards Courier, TCS Express and Daewoo FastEx, and may use another suitable courier where operationally necessary.",
       },
     ],
   },
@@ -67,7 +67,7 @@ const sections: PolicySection[] = [
         p: "Any currency conversion shown on the website is an estimate only and is not a final quotation. The final WhatsApp quotation confirms the payable product price, shipping, and responsibility for customs, duties or taxes. The quotation must be accepted and prepaid before dispatch.",
       },
       {
-        p: "International transit times vary by country, local courier, customs, public holidays, security checks, and regional conditions. Any estimate provided by Fashion Palette or SkyNet is an estimate rather than a guaranteed delivery date.",
+        p: "International transit times vary by country, local courier, customs, public holidays, security checks, and regional conditions. Any estimate provided by Fashion Palette or the delivering courier is an estimate rather than a guaranteed delivery date.",
       },
       {
         p: "International orders must be prepaid; Cash on Delivery is not available for international orders.",
@@ -115,7 +115,7 @@ const sections: PolicySection[] = [
     heading: "5. Tracking and delivery updates",
     blocks: [
       {
-        p: "After dispatch, we normally provide a PostEx, SkyNet, or local-partner tracking code by email and/or WhatsApp. Tracking events are supplied by the courier and may not update in real time.",
+        p: "After dispatch, we normally provide a courier tracking code (for example Leopards Courier, TCS Express or Daewoo FastEx) by email and/or WhatsApp. Tracking events are supplied by the courier and may not update in real time.",
       },
       {
         p: "Customers should monitor tracking, remain reachable, and follow reasonable courier instructions. Fashion Palette does not offer live map tracking.",

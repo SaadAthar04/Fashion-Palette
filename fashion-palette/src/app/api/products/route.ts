@@ -8,9 +8,30 @@ import { requireCatalogueEditor } from "@/lib/admin";
 import { productSchema } from "@/lib/validators";
 import { revalidateCatalog } from "@/lib/revalidate";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { getMissingRequiredFields, type CompletenessInput } from "@/lib/product-completeness";
 import { z } from "zod";
 
 const STAFF_ROLES = ["admin", "catalogue_editor", "order_manager"];
+
+// Phase 2 A2: block publishing a product until the required catalogue fields are
+// present (brand, category, article code, fabric, colour, work type, pieces, and
+// at least one image with alt text). Draft/hidden/archived products are never
+// gated. Returns a 400 response to return early, or null when publishable.
+export function publishGateError(
+  data: { publishStatus?: string } & CompletenessInput,
+  images: CompletenessInput["images"]
+) {
+  if (data.publishStatus !== "published") return null;
+  const missing = getMissingRequiredFields({ ...data, images });
+  if (missing.length === 0) return null;
+  return NextResponse.json(
+    {
+      error: `Cannot publish yet — please complete: ${missing.map((m) => m.label).join(", ")}.`,
+      field: missing[0].key,
+    },
+    { status: 400 }
+  );
+}
 
 // Shared error handler for product create/update (Final feedback A1). Surfaces
 // the specific validation message (e.g. "Cannot publish without a valid PKR
@@ -107,6 +128,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = productSchema.parse(body);
+    const gate = publishGateError(data, body.images);
+    if (gate) return gate;
     const { ...productData } = data;
     // B3: sanitize rich-text HTML before storing (strip scripts/handlers/styling).
     productData.description = sanitizeHtml(productData.description);

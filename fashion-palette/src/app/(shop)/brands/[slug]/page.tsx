@@ -48,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${data.brand.name} — Shop Collection`,
     description: `Browse the complete ${data.brand.name} collection at Fashion Palette. Authentic products with free delivery.`,
+    alternates: { canonical: `/brands/${slug}` },
   };
 }
 

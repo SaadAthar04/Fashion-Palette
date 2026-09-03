@@ -69,14 +69,20 @@ async function getProductReviews(productId: number) {
   }));
 }
 
-// Final feedback A4: recommend by relevant attributes (same brand, collection,
-// fabric, category or price range) rather than category alone.
+// Phase 2 A3: recommend genuinely related items. Rank in the order the client
+// asked for — same collection > same brand > same category / piece count >
+// similar fabric / work type > similar price — prefer in-stock products, and
+// only fall back to a controlled same-category pool when there aren't enough
+// strong matches. Never fill the row with arbitrary products; the section hides
+// itself when nothing acceptable is found.
 async function getRelatedProducts(current: {
   id: number;
   categoryId: number;
   brandId: number;
   collectionId: number | null;
   fabric: string | null;
+  workType: string | null;
+  pieceCount: string | null;
   basePrice: string;
 }) {
   // Candidate pool: same category, brand or collection (a wider net than category).
@@ -93,23 +99,38 @@ async function getRelatedProducts(current: {
       )
     ),
     with: { brand: true, images: true },
-    limit: 40,
+    limit: 60,
   });
 
   const basePrice = parseFloat(current.basePrice) || 0;
   const scored = candidates
     .map((p) => {
       let score = 0;
-      if (current.collectionId && p.collectionId === current.collectionId) score += 5;
-      if (p.brandId === current.brandId) score += 4;
-      if (p.categoryId === current.categoryId) score += 3;
+      // Relevance weights follow the requested priority order.
+      if (current.collectionId && p.collectionId === current.collectionId) score += 6;
+      if (p.brandId === current.brandId) score += 5;
+      if (p.categoryId === current.categoryId) score += 4;
+      if (current.pieceCount && p.pieceCount === current.pieceCount) score += 3;
       if (current.fabric && p.fabric && p.fabric.toLowerCase() === current.fabric.toLowerCase()) score += 2;
+      if (current.workType && p.workType && p.workType === current.workType) score += 2;
       // Price proximity (within 30% of the current price).
       const price = parseFloat(p.basePrice) || 0;
       if (basePrice > 0 && Math.abs(price - basePrice) <= basePrice * 0.3) score += 1;
-      return { p, score };
+      // Prefer in-stock items — a small nudge so availability breaks ties without
+      // overriding a genuinely closer match.
+      const inStock = (p.stockQuantity ?? 0) > 0;
+      if (inStock) score += 1;
+      return { p, score, inStock };
     })
-    .sort((a, b) => b.score - a.score);
+    // Require at least one real relevance signal beyond the in-stock nudge, so a
+    // merely same-category-but-otherwise-unrelated item can still act as fallback
+    // but a random product never appears.
+    .filter((s) => s.score - (s.inStock ? 1 : 0) >= 4)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      // On a tie, surface in-stock first.
+      return Number(b.inStock) - Number(a.inStock);
+    });
 
   return scored.slice(0, 4).map((s) => s.p);
 }
@@ -126,6 +147,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: product.metaTitle || product.name,
     description: product.metaDescription || product.shortDescription || "",
+    // Phase 2 A7: self-referencing canonical (uses the admin-set canonicalUrl
+    // when present, otherwise the product slug). Resolved against metadataBase.
+    alternates: { canonical: product.canonicalUrl || `/products/${product.slug}` },
     openGraph: {
       title: product.name,
       description: product.shortDescription || "",
@@ -153,6 +177,8 @@ export default async function ProductPage({ params }: Props) {
       brandId: product.brandId,
       collectionId: product.collectionId,
       fabric: product.fabric,
+      workType: product.workType,
+      pieceCount: product.pieceCount,
       basePrice: product.basePrice,
     }),
   ]);

@@ -10,6 +10,8 @@ import RichTextEditor from "@/components/admin/RichTextEditor";
 import StructuredDetails, { EMPTY_DETAILS, type ProductDetails } from "@/components/admin/StructuredDetails";
 import { slugify } from "@/lib/utils";
 import { PRODUCT_FABRICS, PRODUCT_OCCASIONS, PRODUCT_SIZES } from "@/lib/constants";
+import { getCompletenessItems } from "@/lib/product-completeness";
+import { Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type ImageItem = { imageUrl: string; altText: string; isPrimary: boolean };
@@ -98,6 +100,22 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // A2: live completeness indicator + publish gate mirroring the server rule.
+  const completeness = getCompletenessItems({
+    brandId: Number(form.brandId) || null,
+    categoryId: Number(form.categoryId) || null,
+    sku: form.sku,
+    fabric: form.fabric,
+    color: form.color,
+    workType: form.workType,
+    pieceCount: form.pieceCount,
+    careInstructions: form.careInstructions,
+    details,
+    images,
+  });
+  const missingRequired = completeness.filter((i) => i.tier === "required" && !i.ok);
+  const blockPublish = form.publishStatus === "published" && missingRequired.length > 0;
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -161,6 +179,10 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (blockPublish) {
+      toast.error(`Complete required fields before publishing: ${missingRequired.map((m) => m.label).join(", ")}.`);
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -427,6 +449,40 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
             ))}
           </div>
 
+          {/* A2: Completeness indicator + publish gate */}
+          <div className="bg-white rounded-lg shadow-sm p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Completeness</h3>
+              {missingRequired.length === 0 ? (
+                <span className="text-[11px] font-semibold text-green-700 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Ready to publish</span>
+              ) : (
+                <span className="text-[11px] font-semibold text-amber-700 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> {missingRequired.length} required left</span>
+              )}
+            </div>
+            <ul className="space-y-1.5">
+              {completeness.map((item) => (
+                <li key={item.key} className="flex items-center gap-2 text-[12px]">
+                  {item.ok ? (
+                    <Check className="w-3.5 h-3.5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
+                  ) : (
+                    <AlertCircle className={`w-3.5 h-3.5 flex-shrink-0 ${item.tier === "required" ? "text-amber-500" : "text-muted/50"}`} strokeWidth={2} />
+                  )}
+                  <span className={item.ok ? "text-muted line-through" : item.tier === "required" ? "text-primary" : "text-muted"}>
+                    {item.label}
+                  </span>
+                  {item.tier === "recommended" && !item.ok && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted/60">recommended</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {blockPublish && (
+              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-2 leading-relaxed">
+                Publishing is blocked until every <strong>required</strong> field above is complete. Save as Draft to keep your changes.
+              </p>
+            )}
+          </div>
+
           {/* SEO */}
           <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
             <h3 className="font-semibold">SEO</h3>
@@ -442,7 +498,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
       {/* Submit */}
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={() => router.push("/admin/products")}>Cancel</Button>
-        <Button type="submit" isLoading={isSubmitting}>{productId ? "Update Product" : "Create Product"}</Button>
+        <Button type="submit" isLoading={isSubmitting} disabled={blockPublish} title={blockPublish ? "Complete required fields before publishing" : undefined}>{productId ? "Update Product" : "Create Product"}</Button>
       </div>
     </form>
   );

@@ -74,7 +74,7 @@ const sections: PolicySection[] = [
       {
         ul: [
           "payment providers about authorization, success, failure, reversal, refund, or suspected fraud;",
-          "PostEx, SkyNet, or another courier about dispatch, tracking, delivery attempts, proof of delivery, customs, or return status;",
+          "our delivery courier about dispatch, tracking, delivery attempts, proof of delivery, customs, or return status;",
           "email, hosting, security, analytics, advertising, and communications providers;",
           "a person who places an order for you or names you as the recipient; and",
           "lawful public authorities or dispute-resolution bodies.",
@@ -133,7 +133,7 @@ const sections: PolicySection[] = [
         ul: [
           "hosting and security providers, such as Hostinger and Cloudflare, that host, transmit, protect, cache, back up, or secure the Site and email;",
           "payment providers, banks, wallet operators, card networks, and fraud-prevention partners that authorize, settle, reverse, or investigate transactions;",
-          "delivery providers, including PostEx for Pakistan deliveries and SkyNet for supported international destinations, together with their local delivery and customs partners;",
+          "delivery couriers used for Pakistan deliveries (such as Leopards Courier, TCS Express and Daewoo FastEx) and any courier used for supported international destinations, together with their local delivery and customs partners;",
           "communications providers, including email, telephone, SMS, WhatsApp, and customer-support tools;",
           "professional advisers, insurers, auditors, accountants, lawyers, and technology contractors bound by appropriate duties;",
           "analytics or advertising providers, but only where those tools are actually enabled and subject to the cookie choices and applicable law;",

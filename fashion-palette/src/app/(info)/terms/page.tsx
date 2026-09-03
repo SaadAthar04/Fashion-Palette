@@ -210,7 +210,7 @@ const sections: PolicySection[] = [
         p: "Pakistan delivery is normally estimated at 3–7 business days after stock confirmation. Eid holidays and other high-volume or disruption periods may add 5–7 business days. Estimates are not guarantees.",
       },
       {
-        p: "International delivery is limited to destinations supported by SkyNet and accepted at the time of order. The recipient is responsible for destination-country duties, tax, clearance, documents, and import compliance unless checkout expressly states otherwise.",
+        p: "International delivery is limited to destinations we can serve and that are accepted at the time of order. The recipient is responsible for destination-country duties, tax, clearance, documents, and import compliance unless checkout expressly states otherwise.",
       },
       {
         p: "You must provide an accurate, complete, and accessible address and remain reachable. Reasonable costs caused by refusal, failed Cash on Delivery, incorrect details, missed delivery, or failure to clear customs may be charged or deducted where permitted by law.",

@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import Breadcrumb from "@/components/ui/Breadcrumb";
-import ProductGrid from "@/components/product/ProductGrid";
+import CategoryPageClient from "@/app/(shop)/categories/[slug]/CategoryPageClient";
 import { ProductCardSkeleton } from "@/components/ui/Skeleton";
-import type { Product } from "@/types";
+import type { Product, Brand } from "@/types";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -42,6 +42,29 @@ function SearchContent() {
     return () => controller.abort();
   }, [query]);
 
+  // Phase 2 A4: derive the brand facet from the products actually returned, so
+  // the search results page offers the same filter + sort controls as category
+  // pages without an extra request.
+  const resultBrands = useMemo<Brand[]>(() => {
+    const seen = new Map<number, Brand>();
+    for (const p of results) {
+      if (p.brand && !seen.has(p.brand.id)) seen.set(p.brand.id, p.brand as Brand);
+    }
+    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [results]);
+
+  if (query && !loading && results.length > 0) {
+    // Hand off to the shared filter/sort client once we have results.
+    return (
+      <CategoryPageClient
+        slug="search"
+        categoryName={`Search results for “${query}”`}
+        products={results}
+        brands={resultBrands}
+      />
+    );
+  }
+
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
       <Breadcrumb items={[{ label: "Search Results" }]} className="mb-6" />
@@ -64,8 +87,6 @@ function SearchContent() {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 text-accent animate-spin" />
             </div>
-          ) : results.length > 0 ? (
-            <ProductGrid products={results} columns={4} />
           ) : (
             <div className="text-center py-20">
               <Search className="w-16 h-16 text-border mx-auto mb-4" strokeWidth={1} />

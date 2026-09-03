@@ -11,6 +11,7 @@ export const revalidate = 300; // ISR: cache 5 min (public catalog)
 export const metadata: Metadata = {
   title: "Sale",
   description: "Shop current discounts on Pakistani designer fashion at Fashion Palette.",
+  alternates: { canonical: "/sale" },
 };
 
 export default async function SalePage() {

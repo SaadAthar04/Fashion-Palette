@@ -14,6 +14,8 @@ const STITCH_OPTIONS = [
 const WORK_OPTIONS = [
   { value: "print", label: "Print" },
   { value: "embroidered", label: "Embroidered" },
+  { value: "plain", label: "Plain" },
+  { value: "mixed", label: "Mixed" },
 ];
 const PIECE_OPTIONS = [
   { value: "1-piece", label: "1 Piece" },
@@ -31,6 +33,7 @@ export interface FilterProps {
   selectedWork: string[];
   selectedPieces: string[];
   saleOnly: boolean;
+  inStockOnly: boolean;
   minPrice: string;
   maxPrice: string;
   onToggleBrand: (slug: string) => void;
@@ -40,6 +43,7 @@ export interface FilterProps {
   onToggleWork: (v: string) => void;
   onTogglePieces: (v: string) => void;
   onToggleSale: () => void;
+  onToggleInStock: () => void;
   onPriceChange: (min: string, max: string) => void;
   onClearAll: () => void;
 }
@@ -53,6 +57,7 @@ export default function FilterSidebar({
   selectedWork,
   selectedPieces,
   saleOnly,
+  inStockOnly,
   minPrice,
   maxPrice,
   onToggleBrand,
@@ -62,6 +67,7 @@ export default function FilterSidebar({
   onToggleWork,
   onTogglePieces,
   onToggleSale,
+  onToggleInStock,
   onPriceChange,
   onClearAll,
   className,
@@ -74,6 +80,7 @@ export default function FilterSidebar({
     selectedWork.length > 0 ||
     selectedPieces.length > 0 ||
     saleOnly ||
+    inStockOnly ||
     !!minPrice ||
     !!maxPrice;
 
@@ -91,16 +98,27 @@ export default function FilterSidebar({
         )}
       </div>
 
-      {/* Sale */}
-      <label className="flex items-center gap-2 cursor-pointer group">
-        <input
-          type="checkbox"
-          checked={saleOnly}
-          onChange={onToggleSale}
-          className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
-        />
-        <span className="text-sm font-medium group-hover:text-accent transition-colors">On Sale</span>
-      </label>
+      {/* Availability + Sale */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={onToggleInStock}
+            className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
+          />
+          <span className="text-sm font-medium group-hover:text-accent transition-colors">In Stock</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={saleOnly}
+            onChange={onToggleSale}
+            className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20"
+          />
+          <span className="text-sm font-medium group-hover:text-accent transition-colors">On Sale</span>
+        </label>
+      </div>
 
       {/* Brands */}
       {brands.length > 0 && (

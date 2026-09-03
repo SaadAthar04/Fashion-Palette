@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${data.category.name} — Shop Pakistani Fashion`,
     description: `Browse our ${data.category.name.toLowerCase()} collection. Shop the latest Pakistani fashion from top designers at Fashion Palette.`,
+    alternates: { canonical: `/categories/${slug}` },
   };
 }
 

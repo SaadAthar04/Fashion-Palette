@@ -164,7 +164,7 @@ const sections: PolicySection[] = [
         p: "Do not use an expensive or unapproved service without written agreement. Costs arising from an unauthorized return method, incorrect address, missed collection, customer-caused damage, or an ineligible request may be the customer’s responsibility where permitted by law.",
       },
       {
-        p: "For an international order, contact us before taking any action. Depending on the evidence and destination, we may resolve an eligible problem without requiring an international return, or provide specific SkyNet/local-courier instructions.",
+        p: "For an international order, contact us before taking any action. Depending on the evidence and destination, we may resolve an eligible problem without requiring an international return, or provide specific courier instructions.",
       },
     ],
   },

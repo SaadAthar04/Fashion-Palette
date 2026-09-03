@@ -36,7 +36,10 @@ export async function GET() {
       .orderBy(desc(products.updatedAt)).limit(100),
     db.select({ id: orders.id, orderNumber: orders.orderNumber, total: orders.total, createdAt: orders.createdAt })
       .from(orders).where(and(eq(orders.paymentStatus, "failed"), eq(orders.isTest, false))).orderBy(desc(orders.createdAt)).limit(50),
-    db.select({ c: count() }).from(returns).where(inArray(returns.status, ["requested", "approved", "item_received", "inspected", "replacement_sent"])),
+    // A6: exclude returns that belong to test orders so the count matches revenue.
+    db.select({ c: count() }).from(returns)
+      .innerJoin(orders, eq(returns.orderId, orders.id))
+      .where(and(inArray(returns.status, ["requested", "approved", "item_received", "inspected", "replacement_sent"]), eq(orders.isTest, false))),
   ]);
 
   return NextResponse.json({

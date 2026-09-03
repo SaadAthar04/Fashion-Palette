@@ -25,6 +25,32 @@ export async function GET() {
   };
   const withBrand = () => db.select(baseCols).from(products).leftJoin(brands, eq(products.brandId, brands.id));
 
+  // Phase 2 A2/A6: a published product is "incomplete" when a required
+  // merchandising field is missing (fabric, colour, work type or piece count).
+  const missingRequiredCond = and(
+    eq(products.publishStatus, "published"),
+    or(
+      isNull(products.fabric), eq(products.fabric, ""),
+      isNull(products.color), eq(products.color, ""),
+      isNull(products.workType),
+      isNull(products.pieceCount)
+    )
+  );
+
+  // A6: corrupted / placeholder text — the Unicode replacement character, common
+  // mojibake ("Ã", "Â€"), or obvious placeholder words in customer-facing text.
+  const corruptedCond = or(
+    sql`${products.name} LIKE '%�%'`,
+    sql`${products.shortDescription} LIKE '%�%'`,
+    sql`${products.description} LIKE '%�%'`,
+    sql`${products.name} LIKE '%Ã%'`,
+    sql`${products.shortDescription} LIKE '%Ã%'`,
+    sql`${products.name} LIKE '%Â€%'`,
+    sql`LOWER(${products.name}) LIKE '%lorem ipsum%'`,
+    sql`LOWER(${products.shortDescription}) LIKE '%lorem ipsum%'`,
+    sql`LOWER(${products.name}) LIKE '%placeholder%'`
+  );
+
   const [
     zeroPrice,
     lowPrice,
@@ -33,6 +59,10 @@ export async function GET() {
     missingImages,
     missingDescription,
     missingStock,
+    incompletePublished,
+    missingAltText,
+    missingStructuredDetails,
+    corruptedText,
   ] = await Promise.all([
     // Zero / negative / (defensively) any non-positive price.
     withBrand().where(lte(products.basePrice, "0")).orderBy(desc(products.updatedAt)).limit(200),
@@ -68,6 +98,23 @@ export async function GET() {
     withBrand()
       .where(and(eq(products.publishStatus, "published"), lte(products.stockQuantity, 0)))
       .limit(200),
+    // A2: published but missing a required merchandising field.
+    withBrand().where(missingRequiredCond).orderBy(desc(products.updatedAt)).limit(200),
+    // A6: published products with at least one image missing alt text.
+    withBrand()
+      .where(
+        and(
+          eq(products.publishStatus, "published"),
+          sql`EXISTS (SELECT 1 FROM ${productImages} WHERE ${productImages.productId} = ${products.id} AND (${productImages.altText} IS NULL OR ${productImages.altText} = ''))`
+        )
+      )
+      .limit(200),
+    // A6: published products with no structured details (What's included / care).
+    withBrand()
+      .where(and(eq(products.publishStatus, "published"), isNull(products.details)))
+      .limit(200),
+    // A6: corrupted / placeholder text in customer-facing fields.
+    withBrand().where(corruptedCond).limit(200),
   ]);
 
   const totalIssues =
@@ -77,7 +124,12 @@ export async function GET() {
     dupSlugGroups.length +
     missingImages.length +
     missingDescription.length +
-    missingStock.length;
+    missingStock.length +
+    incompletePublished.length +
+    missingAltText.length +
+    corruptedText.length;
+  // (missingStructuredDetails is a recommended/quality flag, excluded from the
+  // launch-blocking totalIssues count but still returned for the report.)
 
   return NextResponse.json({
     lowPriceThreshold: LOW_PRICE_WARNING_PKR,
@@ -89,5 +141,9 @@ export async function GET() {
     missingImages,
     missingDescription,
     missingStock,
+    incompletePublished,
+    missingAltText,
+    missingStructuredDetails,
+    corruptedText,
   });
 }

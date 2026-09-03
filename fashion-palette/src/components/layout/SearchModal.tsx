@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, X, Loader2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { getImageUrl, formatPrice } from "@/lib/utils";
+import { getImageUrl } from "@/lib/utils";
+import Price from "@/components/currency/Price";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -138,9 +139,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         <p className="text-[13px] font-medium truncate">{p.name}</p>
                         <p className="text-[11px] text-muted">{p.brand?.name}</p>
                       </div>
-                      <span className="text-[12px] font-semibold text-accent whitespace-nowrap">
-                        {formatPrice(parseFloat(p.salePrice || p.basePrice))}
-                      </span>
+                      <Price
+                        pkr={p.salePrice || p.basePrice}
+                        showEst={false}
+                        className="text-[12px] font-semibold text-accent whitespace-nowrap"
+                      />
                     </button>
                   );
                 })}

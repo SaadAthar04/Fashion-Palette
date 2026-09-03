@@ -16,6 +16,7 @@ type FacetProduct = Product & {
   stitchType?: string | null;
   workType?: string | null;
   pieceCount?: string | null;
+  stockQuantity?: number | null;
 };
 
 interface CategoryPageClientProps {
@@ -54,6 +55,7 @@ function CategoryContent({
   const selectedWork = getList("work");
   const selectedPieces = getList("pieces");
   const saleOnly = searchParams.get("sale") === "1";
+  const inStockOnly = searchParams.get("inStock") === "1";
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
   const sort = searchParams.get("sort") || "newest";
@@ -89,11 +91,17 @@ function CategoryContent({
   const filteredProducts = useMemo(() => {
     let result = [...products];
     if (selectedBrands.length) result = result.filter((p) => selectedBrands.includes(p.brand?.slug || ""));
-    if (selectedFabrics.length) result = result.filter((p) => p.fabric && selectedFabrics.includes(p.fabric.toLowerCase()));
+    // Fabric filter is case-insensitive: the sidebar stores capitalised fabric
+    // names (e.g. "Lawn") while product data may be stored in any case.
+    if (selectedFabrics.length) {
+      const wanted = selectedFabrics.map((f) => f.toLowerCase());
+      result = result.filter((p) => p.fabric && wanted.includes(p.fabric.toLowerCase()));
+    }
     if (selectedStitch.length) result = result.filter((p) => p.stitchType && selectedStitch.includes(p.stitchType));
     if (selectedWork.length) result = result.filter((p) => p.workType && selectedWork.includes(p.workType));
     if (selectedPieces.length) result = result.filter((p) => p.pieceCount && selectedPieces.includes(p.pieceCount));
     if (saleOnly) result = result.filter((p) => !!p.salePrice && priceOf(p) < parseFloat(p.basePrice));
+    if (inStockOnly) result = result.filter((p) => (p.stockQuantity ?? 0) > 0);
     if (minPrice) result = result.filter((p) => priceOf(p) >= parseFloat(minPrice));
     if (maxPrice) result = result.filter((p) => priceOf(p) <= parseFloat(maxPrice));
 
@@ -104,7 +112,7 @@ function CategoryContent({
       default: result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return result;
-  }, [products, selectedBrands, selectedFabrics, selectedStitch, selectedWork, selectedPieces, saleOnly, minPrice, maxPrice, sort]);
+  }, [products, selectedBrands, selectedFabrics, selectedStitch, selectedWork, selectedPieces, saleOnly, inStockOnly, minPrice, maxPrice, sort]);
 
   const visible = filteredProducts.slice(0, visibleCount);
 
@@ -116,13 +124,14 @@ function CategoryContent({
     ...selectedPieces.map((s) => ({ label: s, onRemove: () => toggleParam("pieces", s) })),
     ...selectedFabrics.map((s) => ({ label: s, onRemove: () => toggleParam("fabrics", s) })),
     ...selectedSizes.map((s) => ({ label: `Size ${s}`, onRemove: () => toggleParam("sizes", s) })),
+    ...(inStockOnly ? [{ label: "In Stock", onRemove: () => updateParams({ inStock: null }) }] : []),
     ...(saleOnly ? [{ label: "On Sale", onRemove: () => updateParams({ sale: null }) }] : []),
     ...(minPrice || maxPrice ? [{ label: `Rs ${minPrice || 0}–${maxPrice || "∞"}`, onRemove: () => updateParams({ minPrice: null, maxPrice: null }) }] : []),
   ];
 
   const filterProps: FilterProps = {
     brands,
-    selectedBrands, selectedSizes, selectedFabrics, selectedStitch, selectedWork, selectedPieces, saleOnly,
+    selectedBrands, selectedSizes, selectedFabrics, selectedStitch, selectedWork, selectedPieces, saleOnly, inStockOnly,
     minPrice, maxPrice,
     onToggleBrand: (s) => toggleParam("brands", s),
     onToggleSize: (s) => toggleParam("sizes", s),
@@ -131,6 +140,7 @@ function CategoryContent({
     onToggleWork: (s) => toggleParam("work", s),
     onTogglePieces: (s) => toggleParam("pieces", s),
     onToggleSale: () => updateParams({ sale: saleOnly ? null : "1" }),
+    onToggleInStock: () => updateParams({ inStock: inStockOnly ? null : "1" }),
     onPriceChange: (min, max) => updateParams({ minPrice: min || null, maxPrice: max || null }),
     onClearAll: clearAll,
   };
@@ -170,7 +180,7 @@ function CategoryContent({
 
       {/* Mobile: Filter + Sort */}
       <div className="flex gap-3 mb-6 lg:hidden">
-        <MobileFilters {...filterProps} />
+        <MobileFilters {...filterProps} resultCount={filteredProducts.length} />
         <Select options={sortOptions} value={sort} onChange={(e) => updateParams({ sort: e.target.value })} className="flex-1" />
       </div>
 

@@ -17,7 +17,41 @@ type IntegrityReport = {
   missingImages: IntegrityProduct[];
   missingDescription: IntegrityProduct[];
   missingStock: IntegrityProduct[];
+  incompletePublished: IntegrityProduct[];
+  missingAltText: IntegrityProduct[];
+  missingStructuredDetails: IntegrityProduct[];
+  corruptedText: IntegrityProduct[];
 };
+
+// A6: flatten the integrity report into CSV rows for bulk correction offline.
+function buildIntegrityCsv(r: IntegrityReport): string {
+  const rows: string[][] = [["Issue", "Product", "SKU", "Brand", "Status", "Price (PKR)"]];
+  const add = (issue: string, items: IntegrityProduct[]) =>
+    items.forEach((p) => rows.push([issue, p.name, p.sku, p.brand || "", p.publishStatus, p.basePrice]));
+  add("Zero/invalid price", r.zeroPrice);
+  add("Unusually low price", r.lowPrice);
+  add("Published out of stock", r.missingStock);
+  add("Missing images", r.missingImages);
+  add("Missing description", r.missingDescription);
+  add("Incomplete required fields", r.incompletePublished);
+  add("Missing image alt text", r.missingAltText);
+  add("Missing structured details", r.missingStructuredDetails);
+  add("Corrupted/placeholder text", r.corruptedText);
+  r.duplicateSku.forEach((d) => rows.push(["Duplicate SKU", "", d.value, "", `×${d.c}`, ""]));
+  r.duplicateSlug.forEach((d) => rows.push(["Duplicate slug", d.value, "", "", `×${d.c}`, ""]));
+  const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  return rows.map((cols) => cols.map((c) => esc(String(c ?? ""))).join(",")).join("\n");
+}
+
+function downloadCsv(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 type Report = {
   sales: { allOrders: number; allRevenue: string; monthOrders: number; monthRevenue: string };
@@ -94,15 +128,27 @@ export default function AdminReportsPage() {
           }
           className="mb-6"
         >
-          {integrity.totalIssues === 0 ? (
-            <Empty>No pricing, duplicate, image, description or stock issues found. Safe to launch.</Empty>
+          {integrity.totalIssues === 0 && integrity.missingStructuredDetails.length === 0 ? (
+            <Empty>No pricing, duplicate, image, description, completeness or stock issues found. Safe to launch.</Empty>
           ) : (
             <div className="space-y-5">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => downloadCsv(`catalogue-data-quality-${new Date().toISOString().slice(0, 10)}.csv`, buildIntegrityCsv(integrity))}
+                  className="text-[11px] font-semibold uppercase tracking-[0.15em] text-accent hover:text-accent-hover border border-accent/40 px-3 py-1.5 rounded"
+                >
+                  Export CSV
+                </button>
+              </div>
               <IntegrityBlock title="Zero / invalid price (never publish)" tone="red" items={integrity.zeroPrice} />
               <IntegrityBlock title={`Unusually low price — below Rs ${integrity.lowPriceThreshold.toLocaleString("en-PK")} (check source currency)`} tone="amber" items={integrity.lowPrice} showPrice />
               <IntegrityBlock title="Published but out of stock" tone="amber" items={integrity.missingStock} />
+              <IntegrityBlock title="Published — missing a required field (brand, article code, fabric, colour, work type, pieces)" tone="red" items={integrity.incompletePublished} />
+              <IntegrityBlock title="Published — image missing alt text" tone="amber" items={integrity.missingAltText} />
+              <IntegrityBlock title="Corrupted / placeholder text" tone="red" items={integrity.corruptedText} />
               <IntegrityBlock title="Missing images" tone="amber" items={integrity.missingImages} />
               <IntegrityBlock title="Missing description" tone="amber" items={integrity.missingDescription} />
+              <IntegrityBlock title="Missing structured details (What's included / care) — recommended" tone="amber" items={integrity.missingStructuredDetails} />
               {integrity.duplicateSku.length > 0 && (
                 <div>
                   <p className="text-[13px] font-semibold text-red-600 mb-1">Duplicate SKUs</p>

@@ -47,7 +47,7 @@ export default function Price({
   return (
     <span className={className}>
       ≈ {formatCurrency(converted, code)}
-      {showEst && <span className={cn("ml-1 text-[0.75em] opacity-70 font-normal", estClassName)}>est.</span>}
+      {showEst && <span className={cn("ml-1 text-[0.75em] opacity-70 font-normal", estClassName)}>(estimated)</span>}
     </span>
   );
 }
