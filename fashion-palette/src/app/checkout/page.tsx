@@ -44,6 +44,12 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // B2: coupon / promo code (server-validated preview; re-checked at order time).
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+
   useEffect(() => { setMounted(true); }, []);
 
   if (!mounted) {
@@ -80,8 +86,11 @@ export default function CheckoutPage() {
   }
 
   const subtotal = getSubtotal();
-  const deliveryCharges = subtotal >= freeThreshold ? 0 : deliveryCharge;
-  const total = subtotal + deliveryCharges;
+  // Discount can't exceed the subtotal; delivery threshold applies to the net.
+  const discount = Math.min(appliedCoupon?.discount ?? 0, subtotal);
+  const netSubtotal = subtotal - discount;
+  const deliveryCharges = netSubtotal >= freeThreshold ? 0 : deliveryCharge;
+  const total = netSubtotal + deliveryCharges;
 
   if (items.length === 0) {
     return (
@@ -95,6 +104,38 @@ export default function CheckoutPage() {
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponChecking(true);
+    setCouponMsg(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon({ code: data.code, discount: data.discount });
+        setCouponMsg(null);
+      } else {
+        setAppliedCoupon(null);
+        setCouponMsg(data.reason || "This code is not valid.");
+      }
+    } catch {
+      setCouponMsg("Couldn't check that code. Please try again.");
+    } finally {
+      setCouponChecking(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponMsg(null);
   };
 
   const validateShipping = () => {
@@ -149,6 +190,7 @@ export default function CheckoutPage() {
           paymentMethod: formData.paymentMethod,
           acceptTerms: true,
           notes: formData.notes || undefined,
+          couponCode: appliedCoupon?.code || undefined,
           items: orderItems,
         }),
       });
@@ -315,8 +357,35 @@ export default function CheckoutPage() {
         <div className="lg:col-span-1">
           <div className="bg-surface p-6 sticky top-24">
             <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+
+            {/* B2: promo / coupon code */}
+            <div className="mb-4">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2.5 rounded">
+                  <span className="text-[12px] font-medium text-success">Code {appliedCoupon.code} applied</span>
+                  <button onClick={removeCoupon} className="text-[11px] text-muted hover:text-primary underline">Remove</button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyCoupon(); } }}
+                    placeholder="Promo code"
+                    className="flex-1 px-3 py-2.5 border border-border rounded text-sm focus:outline-none focus:border-accent uppercase"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={applyCoupon} isLoading={couponChecking} disabled={!couponInput.trim()}>Apply</Button>
+                </div>
+              )}
+              {couponMsg && <p className="text-[11px] text-sale mt-1.5">{couponMsg}</p>}
+            </div>
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-muted">Subtotal</span><span className="font-medium">{formatPrice(subtotal)}</span></div>
+              {discount > 0 && (
+                <div className="flex justify-between"><span className="text-muted">Discount{appliedCoupon ? ` (${appliedCoupon.code})` : ""}</span><span className="font-medium text-success">−{formatPrice(discount)}</span></div>
+              )}
               <div className="flex justify-between"><span className="text-muted">Delivery</span><span className={deliveryCharges === 0 ? "text-success font-medium" : "font-medium"}>{deliveryCharges === 0 ? "FREE" : formatPrice(deliveryCharges)}</span></div>
               <hr className="border-border" />
               <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{formatPrice(total)}</span></div>

@@ -14,6 +14,8 @@ export async function GET() {
       logoUrl: brands.logoUrl,
       description: brands.description,
       isActive: brands.isActive,
+      isFeatured: brands.isFeatured,
+      featuredSortOrder: brands.featuredSortOrder,
       sortOrder: brands.sortOrder,
       createdAt: brands.createdAt,
       productCount: count(products.id),

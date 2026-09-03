@@ -14,18 +14,31 @@ type BannerRow = {
   title: string | null;
   subtitle: string | null;
   imageUrl: string;
+  mobileImageUrl: string | null;
   linkUrl: string | null;
   ctaText: string | null;
+  couponCode: string | null;
+  audience: string | null;
   sortOrder: number;
   isActive: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
 };
+
+const EMPTY_FORM = {
+  title: "", subtitle: "", imageUrl: "", mobileImageUrl: "", linkUrl: "", ctaText: "",
+  couponCode: "", audience: "all", sortOrder: 0, isActive: true, startsAt: "", endsAt: "",
+};
+
+// datetime-local wants "YYYY-MM-DDTHH:mm"; convert a stored ISO/date string.
+const toLocalInput = (v: string | null) => (v ? new Date(v).toISOString().slice(0, 16) : "");
 
 export default function AdminBannersPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<BannerRow | null>(null);
-  const [form, setForm] = useState({ title: "", subtitle: "", imageUrl: "", linkUrl: "", ctaText: "", sortOrder: 0, isActive: true });
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-banners"],
@@ -65,7 +78,7 @@ export default function AdminBannersPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ title: "", subtitle: "", imageUrl: "", linkUrl: "", ctaText: "", sortOrder: 0, isActive: true });
+    setForm({ ...EMPTY_FORM });
     setModalOpen(true);
   };
 
@@ -75,10 +88,15 @@ export default function AdminBannersPage() {
       title: banner.title || "",
       subtitle: banner.subtitle || "",
       imageUrl: banner.imageUrl,
+      mobileImageUrl: banner.mobileImageUrl || "",
       linkUrl: banner.linkUrl || "",
       ctaText: banner.ctaText || "",
+      couponCode: banner.couponCode || "",
+      audience: banner.audience || "all",
       sortOrder: banner.sortOrder,
       isActive: banner.isActive,
+      startsAt: toLocalInput(banner.startsAt),
+      endsAt: toLocalInput(banner.endsAt),
     });
     setModalOpen(true);
   };
@@ -143,11 +161,40 @@ export default function AdminBannersPage() {
 
       <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? "Edit Banner" : "Add Banner"} size="lg">
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <Input label="Title" id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <Input label="Subtitle" id="subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
-          <Input label="Image URL" id="imageUrl" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} required />
-          <Input label="Link URL" id="linkUrl" value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} />
-          <Input label="CTA Text" id="ctaText" value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })} />
+          <Input label="Headline (title)" id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <Input label="Supporting line (subtitle)" id="subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Desktop image URL" id="imageUrl" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} required />
+            <Input label="Mobile image URL (optional)" id="mobileImageUrl" value={form.mobileImageUrl} onChange={(e) => setForm({ ...form, mobileImageUrl: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="CTA label" id="ctaText" value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })} placeholder="e.g. Shop the Eid Edit" />
+            <Input label="CTA link" id="linkUrl" value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} placeholder="/sale" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input label="Coupon code (optional)" id="couponCode" value={form.couponCode} onChange={(e) => setForm({ ...form, couponCode: e.target.value.toUpperCase() })} placeholder="EID10" />
+              <p className="text-[11px] text-muted mt-1">Must match an active coupon so checkout can honour it.</p>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Audience</label>
+              <select value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value })} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent">
+                <option value="all">All visitors</option>
+                <option value="subscribers">Newsletter subscribers</option>
+                <option value="vip">VIP members</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Starts at (optional)</label>
+              <input type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Ends at (optional)</label>
+              <input type="datetime-local" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} className="w-full px-4 py-3 border border-border/50 text-[13px] bg-white focus:outline-none focus:border-accent" />
+            </div>
+          </div>
           <Input label="Sort Order" id="sortOrder" type="number" value={String(form.sortOrder)} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} />
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />

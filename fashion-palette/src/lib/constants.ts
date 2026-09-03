@@ -34,34 +34,75 @@ export const NAV_LINKS = [
   { label: "Stitching", href: "/stitching" }, // service page, not a product category
 ] as const;
 
+// Phase 2 B5: help topics — the single obvious route to every recurring
+// customer-support question. Reused by the footer Help Centre column and the
+// /help hub page so they never drift apart.
+export const HELP_TOPICS = [
+  { label: "FAQ", href: "/faq", blurb: "Answers to the most common questions." },
+  { label: "Track Order", href: "/account/orders", blurb: "Check the status of an order." },
+  { label: "Shipping & Delivery", href: "/shipping", blurb: "Delivery times, charges and couriers." },
+  { label: "Returns & Refunds", href: "/returns", blurb: "How to report an issue or return." },
+  { label: "Payments", href: "/payment", blurb: "Cash on Delivery and payment safety." },
+  { label: "Stitching", href: "/stitching", blurb: "Get an unstitched suit stitched via WhatsApp." },
+  { label: "International Orders", href: "/contact", blurb: "Ordering from outside Pakistan (WhatsApp quote)." },
+  { label: "Contact Us", href: "/contact", blurb: "Reach our support team." },
+] as const;
+
+// Phase 2 B5: footer columns. Kept concise so mobile isn't a wall of links;
+// legal links live in the bottom bar.
 export const FOOTER_LINKS = {
-  about: {
-    title: "About",
+  shop: {
+    title: "Shop",
     links: [
-      { label: "Our Story", href: "/about" },
-      { label: "Contact Us", href: "/contact" },
-      // Feedback 24: Store Locator removed — no physical store to link to.
+      { label: "New Arrivals", href: "/new-arrivals" },
+      { label: "Unstitched", href: "/categories/unstitched" },
+      { label: "Brands", href: "/brands" },
+      { label: "Sale", href: "/sale" },
     ],
   },
-  customerService: {
-    title: "Customer Service",
+  helpCentre: {
+    title: "Help Centre",
     links: [
+      { label: "Help Centre", href: "/help" },
       { label: "FAQ", href: "/faq" },
       { label: "Track Order", href: "/account/orders" },
+      { label: "Shipping & Delivery", href: "/shipping" },
+      { label: "Returns & Refunds", href: "/returns" },
+      { label: "Payments", href: "/payment" },
     ],
   },
-  // All five policy pages grouped together for consistency.
-  information: {
-    title: "Information",
+  company: {
+    title: "Company",
     links: [
-      { label: "Terms & Conditions", href: "/terms" },
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Returns & Refunds", href: "/returns" },
-      { label: "Shipping & Delivery", href: "/shipping" },
-      { label: "Payment Policy", href: "/payment" },
+      { label: "About Us", href: "/about" },
+      { label: "Contact Us", href: "/contact" },
+      { label: "Stitching", href: "/stitching" },
+    ],
+  },
+  account: {
+    title: "Account",
+    links: [
+      { label: "My Account", href: "/account" },
+      { label: "Wishlist", href: "/account/wishlist" },
+      { label: "Cart", href: "/cart" },
     ],
   },
 } as const;
+
+// Legal links shown in the footer's bottom bar.
+export const LEGAL_LINKS = [
+  { label: "Terms & Conditions", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+] as const;
+
+// Compact, verifiable trust/service claims for the footer strip. Only add a
+// claim here if it is genuinely true and operational.
+export const TRUST_CLAIMS = [
+  "Cash on Delivery",
+  "100% Original Products",
+  "Delivery Across Pakistan",
+  "Customer Support",
+] as const;
 
 // Feedback 03/26/31: public business + contact details, sourced from the
 // approved policy documents. Emails are routed by purpose.
@@ -69,6 +110,9 @@ export const CONTACT = {
   location: "People’s Colony, Faisalabad, Punjab, Pakistan",
   whatsappDisplay: "0327-6796087",
   operatedBy: "Meelan Ahmad",
+  // Phase 2 B5: shown in the footer/Help Centre only once confirmed. Leave null
+  // to hide (never advertise unverified hours). Client to confirm real hours.
+  supportHours: null as string | null,
   emails: {
     general: "contact@fashionpalette.pk",
     orders: "orders@fashionpalette.pk",

@@ -17,16 +17,20 @@ type BrandRow = {
   description: string | null;
   logoUrl: string | null;
   isActive: boolean;
+  isFeatured: boolean;
+  featuredSortOrder: number;
   sortOrder: number;
   productCount: number;
 };
+
+const EMPTY_BRAND = { name: "", slug: "", description: "", logoUrl: "", isActive: true, isFeatured: false, featuredSortOrder: 0, sortOrder: 0 };
 
 export default function AdminBrandsPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<BrandRow | null>(null);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", logoUrl: "", isActive: true, sortOrder: 0 });
+  const [form, setForm] = useState({ ...EMPTY_BRAND });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-brands"],
@@ -66,13 +70,22 @@ export default function AdminBrandsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", slug: "", description: "", logoUrl: "", isActive: true, sortOrder: 0 });
+    setForm({ ...EMPTY_BRAND });
     setModalOpen(true);
   };
 
   const openEdit = (brand: BrandRow) => {
     setEditing(brand);
-    setForm({ name: brand.name, slug: brand.slug, description: brand.description || "", logoUrl: brand.logoUrl || "", isActive: brand.isActive, sortOrder: brand.sortOrder });
+    setForm({
+      name: brand.name,
+      slug: brand.slug,
+      description: brand.description || "",
+      logoUrl: brand.logoUrl || "",
+      isActive: brand.isActive,
+      isFeatured: brand.isFeatured,
+      featuredSortOrder: brand.featuredSortOrder ?? 0,
+      sortOrder: brand.sortOrder,
+    });
     setModalOpen(true);
   };
 
@@ -102,19 +115,25 @@ export default function AdminBrandsPage() {
                 <th className="p-4 font-semibold">Name</th>
                 <th className="p-4 font-semibold">Slug</th>
                 <th className="p-4 font-semibold">Products</th>
+                <th className="p-4 font-semibold">Featured</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {brands.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted">No brands found</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted">No brands found</td></tr>
               ) : (
                 brands.map((brand) => (
                   <tr key={brand.id} className="hover:bg-surface/50">
                     <td className="p-4 font-medium">{brand.name}</td>
                     <td className="p-4 text-muted">{brand.slug}</td>
                     <td className="p-4">{brand.productCount}</td>
+                    <td className="p-4">
+                      {brand.isFeatured
+                        ? <span className="text-xs font-medium px-2 py-1 rounded-full bg-accent/10 text-accent">Featured #{brand.featuredSortOrder}</span>
+                        : <span className="text-xs text-muted">—</span>}
+                    </td>
                     <td className="p-4">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${brand.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                         {brand.isActive ? "Active" : "Inactive"}
@@ -143,10 +162,17 @@ export default function AdminBrandsPage() {
             <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-primary mb-2">Description</label>
             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-4 py-3 border border-border/50 text-[13px] focus:outline-none focus:border-accent" />
           </div>
-          <Input label="Sort Order" id="sortOrder" type="number" value={String(form.sortOrder)} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Sort Order" id="sortOrder" type="number" value={String(form.sortOrder)} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} />
+            <Input label="Featured Order" id="featuredSortOrder" type="number" value={String(form.featuredSortOrder)} onChange={(e) => setForm({ ...form, featuredSortOrder: parseInt(e.target.value) || 0 })} />
+          </div>
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
             <span className="text-sm">Active</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} className="rounded" />
+            <span className="text-sm">Featured on Brands page</span>
           </label>
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" size="sm" onClick={closeModal}>Cancel</Button>

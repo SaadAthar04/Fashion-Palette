@@ -161,6 +161,8 @@ export const brandSchema = z.object({
   logoUrl: z.string().optional(),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
+  featuredSortOrder: z.number().int().default(0),
   sortOrder: z.number().int().default(0),
 });
 
@@ -171,6 +173,8 @@ export const bannerSchema = z.object({
   mobileImageUrl: z.string().optional(),
   linkUrl: z.string().optional(),
   ctaText: z.string().optional(),
+  couponCode: z.string().optional().nullable(),
+  audience: z.string().optional().nullable(),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
   startsAt: z.string().optional().nullable(),

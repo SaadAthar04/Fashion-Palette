@@ -1,9 +1,11 @@
 export const revalidate = 300; // ISR: cache 5 min (public catalog)
 
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
-import { products, brands, categories } from "@/lib/db/schema";
-import { eq, and, desc, gt } from "drizzle-orm";
+import { products, brands, categories, banners } from "@/lib/db/schema";
+import { eq, and, desc, gt, or, lte, gte, isNull } from "drizzle-orm";
 import HeroBanner from "@/components/home/HeroBanner";
+import PromoBanner from "@/components/home/PromoBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
 import NewArrivals from "@/components/home/NewArrivals";
 import FeaturedCollections from "@/components/home/FeaturedCollections";
@@ -13,8 +15,14 @@ import BestSellers from "@/components/home/BestSellers";
 import NewsletterSignup from "@/components/home/NewsletterSignup";
 import TrustBadges from "@/components/shared/TrustBadges";
 
+// Phase 2 A7: self-referencing canonical for the homepage.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
 async function getHomeData() {
-  const [allCategories, allBrands, allProducts] = await Promise.all([
+  const now = new Date();
+  const [allCategories, allBrands, allProducts, activeBanners] = await Promise.all([
     db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.sortOrder),
     db.select().from(brands).where(eq(brands.isActive, true)).orderBy(brands.name),
     db.query.products.findMany({
@@ -22,8 +30,18 @@ async function getHomeData() {
       with: { brand: true, images: true },
       orderBy: [desc(products.createdAt)],
     }),
+    // B2: active banners within their schedule window (no targeting yet, so only
+    // "all"/unset audiences are shown to everyone).
+    db.select().from(banners).where(
+      and(
+        eq(banners.isActive, true),
+        or(isNull(banners.startsAt), lte(banners.startsAt, now)),
+        or(isNull(banners.endsAt), gte(banners.endsAt, now)),
+        or(isNull(banners.audience), eq(banners.audience, "all"))
+      )
+    ).orderBy(banners.sortOrder),
   ]);
-  return { allCategories, allBrands, allProducts };
+  return { allCategories, allBrands, allProducts, activeBanners };
 }
 
 type ProductWithImages = Awaited<ReturnType<typeof getHomeData>>["allProducts"][number];
@@ -31,7 +49,8 @@ const primaryImage = (p: ProductWithImages) =>
   p.images?.find((i) => i.isPrimary)?.imageUrl ?? p.images?.[0]?.imageUrl ?? null;
 
 export default async function HomePage() {
-  const { allCategories, allBrands, allProducts } = await getHomeData();
+  const { allCategories, allBrands, allProducts, activeBanners } = await getHomeData();
+  const promoBanner = activeBanners[0] ?? null;
 
   // Derive real imagery from the catalogue so no section shows a placeholder.
   const catImg: Record<number, string> = {};
@@ -74,6 +93,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroBanner slides={heroSlides} />
+      <PromoBanner banner={promoBanner} />
       <NewArrivals products={newArrivalCards} />
       <CategoryGrid categories={enrichedCategories} />
       {enrichedBrands.length > 0 && <BrandCarousel brands={enrichedBrands} />}

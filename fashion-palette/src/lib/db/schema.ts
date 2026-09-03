@@ -21,6 +21,9 @@ export const brands = mysqlTable("brands", {
   logoUrl: varchar("logo_url", { length: 500 }),
   description: text(),
   isActive: boolean("is_active").notNull().default(true),
+  // Phase 2 B1: curated "Featured Brands" row on the Brands landing page.
+  isFeatured: boolean("is_featured").notNull().default(false),
+  featuredSortOrder: int("featured_sort_order").notNull().default(0),
   sortOrder: int("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -381,6 +384,10 @@ export const banners = mysqlTable("banners", {
   mobileImageUrl: varchar("mobile_image_url", { length: 500 }),
   linkUrl: varchar("link_url", { length: 500 }),
   ctaText: varchar("cta_text", { length: 100 }),
+  // Phase 2 B2: optional promo code advertised by the banner (must match an
+  // active coupon so checkout can honour it) + audience label.
+  couponCode: varchar("coupon_code", { length: 60 }),
+  audience: varchar({ length: 40 }),
   sortOrder: int("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   startsAt: timestamp("starts_at"),

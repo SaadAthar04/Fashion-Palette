@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   FOOTER_LINKS,
+  LEGAL_LINKS,
+  TRUST_CLAIMS,
   SOCIAL_LINKS,
   SITE_NAME,
   CONTACT,
@@ -47,9 +49,9 @@ export default function Footer() {
 
       {/* Main Footer */}
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pt-16 pb-12 md:pt-20 md:pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 lg:gap-12">
           {/* Brand Column */}
-          <div className="lg:pr-4">
+          <div className="col-span-2 lg:pr-4">
             <Link href="/" className="inline-block mb-6">
               <span className="text-lg font-semibold tracking-[0.2em] uppercase">
                 Fashion{" "}
@@ -76,6 +78,7 @@ export default function Footer() {
                   {CONTACT.emails.support}
                 </a>
               </p>
+              {CONTACT.supportHours && <p>Support hours: {CONTACT.supportHours}</p>}
             </address>
 
             {/* Feedback 06: only render social icons that have a confirmed profile. */}
@@ -127,8 +130,18 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Payment Methods */}
+        {/* B5: compact trust/service strip — verified claims only. */}
         <div className="mt-16 pt-8 border-t border-white/[0.06]">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8">
+            {TRUST_CLAIMS.map((claim) => (
+              <span key={claim} className="flex items-center gap-2 text-[11px] tracking-wider text-white/45 uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent/70" />
+                {claim}
+              </span>
+            ))}
+          </div>
+
+          {/* Payment Methods */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-5">
               <span className="text-[10px] text-white/25 uppercase tracking-[0.2em]">
@@ -149,12 +162,19 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Copyright */}
+      {/* Copyright + legal */}
       <div className="border-t border-white/[0.06] py-5">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8">
-          <p className="text-[10px] text-white/25 text-center tracking-[0.15em] uppercase">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[10px] text-white/25 tracking-[0.15em] uppercase">
             &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </p>
+          <div className="flex items-center gap-4">
+            {LEGAL_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="text-[10px] text-white/25 hover:text-accent tracking-[0.15em] uppercase transition-colors">
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

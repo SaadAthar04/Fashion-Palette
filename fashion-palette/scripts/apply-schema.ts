@@ -148,6 +148,35 @@ async function main() {
     console.log("• newsletter_subscribers.unsubscribed_at already present");
   }
 
+  // ── Phase 2 (5300) ──────────────────────────────────────
+  // B2: banner promo code + audience.
+  if (!(await columnExists("banners", "coupon_code"))) {
+    await pool.query("ALTER TABLE `banners` ADD `coupon_code` varchar(60) NULL");
+    console.log("✓ banners.coupon_code added");
+  } else {
+    console.log("• banners.coupon_code already present");
+  }
+  if (!(await columnExists("banners", "audience"))) {
+    await pool.query("ALTER TABLE `banners` ADD `audience` varchar(40) NULL");
+    console.log("✓ banners.audience added");
+  } else {
+    console.log("• banners.audience already present");
+  }
+
+  // B1: featured brands for the Brands landing page.
+  if (!(await columnExists("brands", "is_featured"))) {
+    await pool.query("ALTER TABLE `brands` ADD `is_featured` boolean NOT NULL DEFAULT false");
+    console.log("✓ brands.is_featured added");
+  } else {
+    console.log("• brands.is_featured already present");
+  }
+  if (!(await columnExists("brands", "featured_sort_order"))) {
+    await pool.query("ALTER TABLE `brands` ADD `featured_sort_order` int NOT NULL DEFAULT 0");
+    console.log("✓ brands.featured_sort_order added");
+  } else {
+    console.log("• brands.featured_sort_order already present");
+  }
+
   await pool.end();
   console.log("✅ apply-schema complete");
   process.exit(0);

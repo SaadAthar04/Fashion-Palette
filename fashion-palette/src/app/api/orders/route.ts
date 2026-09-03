@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, or, like, desc, count, inArray, sql, gte, lte } from "drizzle-orm";
 import { checkoutSchema } from "@/lib/validators";
+import { validateCoupon } from "@/lib/coupons";
 import { generateOrderNumber } from "@/lib/utils";
 import { getDeliveryConfig } from "@/lib/settings";
 import { sendEmail } from "@/lib/email/mailer";
@@ -230,33 +231,18 @@ export async function POST(request: Request) {
 
     const subtotal = validated.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
 
-    // ── Coupon (optional, server-validated) ──
+    // ── Coupon (optional, server-validated via shared helper) ──
     let discount = 0;
     let couponId: number | null = null;
     let couponCode: string | null = null;
     if (data.couponCode) {
-      const [coupon] = await db
-        .select()
-        .from(coupons)
-        .where(and(eq(coupons.code, data.couponCode), eq(coupons.isActive, true)))
-        .limit(1);
-      const now = new Date();
-      const valid =
-        coupon &&
-        (!coupon.startsAt || coupon.startsAt <= now) &&
-        (!coupon.endsAt || coupon.endsAt >= now) &&
-        subtotal >= parseFloat(coupon.minSubtotal) &&
-        (coupon.usageLimit == null || coupon.usedCount < coupon.usageLimit);
-      if (!valid) {
-        return NextResponse.json({ error: "This coupon is not valid for your order." }, { status: 409 });
+      const result = await validateCoupon(data.couponCode, subtotal);
+      if (!result.valid) {
+        return NextResponse.json({ error: result.reason || "This coupon is not valid for your order." }, { status: 409 });
       }
-      discount =
-        coupon.discountType === "percent"
-          ? Math.round((subtotal * parseFloat(coupon.discountValue)) / 100)
-          : parseFloat(coupon.discountValue);
-      discount = Math.min(discount, subtotal);
-      couponId = coupon.id;
-      couponCode = coupon.code;
+      discount = result.discount;
+      couponId = result.couponId;
+      couponCode = result.code;
     }
 
     // Feedback 16/24: flat delivery, free above threshold — read from settings

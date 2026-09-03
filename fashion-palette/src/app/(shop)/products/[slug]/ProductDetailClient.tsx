@@ -16,9 +16,9 @@ import { Scissors } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import InternationalEnquiry from "@/components/product/InternationalEnquiry";
 import NotifyWhenAvailable from "@/components/product/NotifyWhenAvailable";
-import ProductStructuredDetails from "@/components/product/ProductStructuredDetails";
+import ProductStructuredDetails, { getDetailCounts } from "@/components/product/ProductStructuredDetails";
+import Accordion, { type AccordionItem } from "@/components/ui/Accordion";
 import { productEnquiryUrl, stitchingEnquiryUrl } from "@/lib/whatsapp";
-import { cn } from "@/lib/utils";
 import type { Product, ProductVariant, Review } from "@/types";
 
 interface ProductDetailClientProps {
@@ -42,9 +42,6 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] =
     useState<ProductVariant | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "description" | "size-guide" | "reviews"
-  >("description");
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
@@ -63,14 +60,106 @@ export default function ProductDetailClient({
   // A4: only show the ready-to-wear size chart when the product genuinely has
   // sizes (stitched / ready-to-wear). Unstitched suits don't get an RTW size guide.
   const hasSizes = (product.variants ?? []).some((v) => !!v.size);
-  const tabs = [
-    { id: "description" as const, label: "Description" },
-    ...(hasSizes ? [{ id: "size-guide" as const, label: "Size Guide" }] : []),
-    {
-      id: "reviews" as const,
-      label: `Reviews (${reviews.filter((r) => r.isApproved).length})`,
-    },
-  ];
+
+  // B4: short "What's included" summary for the purchase area, from the
+  // structured component list (item names only).
+  const includedItems = (product.details?.included ?? []).map((r) => r.item?.trim()).filter(Boolean) as string[];
+  const includedSummary = includedItems.slice(0, 5).join(", ");
+
+  const detailCounts = getDetailCounts(product.details);
+  const approvedReviews = reviews.filter((r) => r.isApproved).length;
+
+  // B4: build the lower-section accordion — only panels that have content, so an
+  // unstitched product never shows an empty RTW size guide, etc.
+  const hasLongDescription = Boolean(
+    (product.description && product.description.trim()) ||
+    (product.shortDescription && product.shortDescription.trim())
+  );
+  const accordionItems: AccordionItem[] = [];
+  if (hasLongDescription) {
+    accordionItems.push({
+      id: "description",
+      title: "Description",
+      content: product.description ? (
+        <div
+          className="prose prose-sm max-w-none text-muted [&_h2]:text-primary [&_h2]:font-semibold [&_h2]:text-base [&_h3]:text-primary [&_h3]:font-semibold [&_h3]:text-sm [&_h3]:tracking-wide [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.8] [&_p]:text-[13px]"
+          // Already sanitized server-side on save (B3).
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
+      ) : (
+        <p className="text-[13px] text-muted leading-[1.8] font-light">{product.shortDescription}</p>
+      ),
+    });
+  }
+  if (detailCounts.included > 0) {
+    accordionItems.push({
+      id: "included",
+      title: "What's included",
+      content: <ProductStructuredDetails details={product.details} only={["included"]} />,
+    });
+  }
+  if (detailCounts.components > 0) {
+    accordionItems.push({
+      id: "measurements",
+      title: "Measurements",
+      content: <ProductStructuredDetails details={product.details} only={["components"]} />,
+    });
+  }
+  if (detailCounts.care > 0 || detailCounts.disclaimers > 0) {
+    accordionItems.push({
+      id: "care",
+      title: "Care & disclaimers",
+      content: <ProductStructuredDetails details={product.details} only={["care", "disclaimers"]} />,
+    });
+  }
+  if (hasSizes) {
+    accordionItems.push({
+      id: "size-guide",
+      title: "Size guide (inches)",
+      content: (
+        <table className="w-full text-[13px] max-w-2xl">
+          <thead>
+            <tr className="border-b border-border/50 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              <th className="py-3.5">Size</th>
+              <th className="py-3.5">Bust</th>
+              <th className="py-3.5">Waist</th>
+              <th className="py-3.5">Hip</th>
+              <th className="py-3.5">Length</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sizeGuide.map((row) => (
+              <tr key={row.size} className="border-b border-border/30">
+                <td className="py-3.5 font-medium">{row.size}</td>
+                <td className="py-3.5 text-muted">{row.bust}&quot;</td>
+                <td className="py-3.5 text-muted">{row.waist}&quot;</td>
+                <td className="py-3.5 text-muted">{row.hip}&quot;</td>
+                <td className="py-3.5 text-muted">{row.length}&quot;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ),
+    });
+  }
+  accordionItems.push({
+    id: "service",
+    title: "Delivery, returns & stitching",
+    content: (
+      <ul className="space-y-2.5 text-[13px] text-muted">
+        <li><Link href="/shipping" className="text-accent hover:underline">Shipping &amp; delivery</Link> — cash on delivery across Pakistan.</li>
+        <li><Link href="/returns" className="text-accent hover:underline">Returns &amp; refunds</Link> — report an issue within 48 hours of delivery.</li>
+        <li><Link href="/payment" className="text-accent hover:underline">Payment policy</Link> — how payment is handled.</li>
+        {isUnstitched && <li><Link href="/stitching" className="text-accent hover:underline">Stitching service</Link> — get this unstitched suit stitched via WhatsApp.</li>}
+        <li>International order? Enquire and get a quote on WhatsApp (see the buttons above).</li>
+      </ul>
+    ),
+  });
+  accordionItems.push({
+    id: "reviews",
+    title: `Reviews (${approvedReviews})`,
+    content: <ReviewSection reviews={reviews} productId={product.id} />,
+  });
 
   return (
     <div>
@@ -204,12 +293,20 @@ export default function ProductDetailClient({
               <InternationalEnquiry product={productRef} />
             </div>
 
-            {/* What's included (Feedback 08) */}
+            {/* B4: What's included — driven by the structured component list when
+                present (Shirt, Dupatta, Trouser, …), not a single compressed line. */}
             <div className="pt-4 text-[12px] text-muted leading-relaxed">
               <span className="font-semibold text-primary">What&apos;s included:</span>{" "}
-              {product.pieceCount
-                ? `${product.pieceCount} — see the full component list in the Description below.`
-                : "See the full component list in the Description below."}
+              {includedSummary ? (
+                <>
+                  {includedSummary}.{" "}
+                  <a href="#product-details" className="text-accent hover:underline">Full breakdown below ↓</a>
+                </>
+              ) : product.pieceCount ? (
+                `${product.pieceCount} — see the full component list below.`
+              ) : (
+                "See the full component list below."
+              )}
             </div>
 
             {/* Policy links under product info (Feedback 08 + Web Pages note) */}
@@ -233,104 +330,10 @@ export default function ProductDetailClient({
           </div>
         </div>
 
-        {/* Tabs Section */}
-        <div id="product-details" className="mt-16 md:mt-20 scroll-mt-24">
-          <div className="flex border-b border-border/50">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-300 border-b -mb-px",
-                  activeTab === tab.id
-                    ? "border-accent text-accent"
-                    : "border-transparent text-muted hover:text-primary"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="py-10">
-            {activeTab === "description" && (
-              <div className="max-w-3xl space-y-8">
-                {product.description ? (
-                  <div
-                    className="prose prose-sm max-w-none text-muted [&_h2]:text-primary [&_h2]:font-semibold [&_h2]:text-base [&_h3]:text-primary [&_h3]:font-semibold [&_h3]:text-sm [&_h3]:tracking-wide [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.8] [&_p]:text-[13px]"
-                    // Already sanitized server-side on save (B3).
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
-                ) : product.shortDescription ? (
-                  <p className="text-[13px] text-muted leading-[1.8] font-light">
-                    {product.shortDescription}
-                  </p>
-                ) : null}
-
-                <ProductStructuredDetails details={product.details} />
-              </div>
-            )}
-
-            {activeTab === "size-guide" && (
-              <div className="max-w-2xl">
-                <h3 className="text-sm font-semibold tracking-wide uppercase mb-6">
-                  Size Guide (inches)
-                </h3>
-                <table className="w-full text-[13px]">
-                  <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                        Size
-                      </th>
-                      <th className="py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                        Bust
-                      </th>
-                      <th className="py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                        Waist
-                      </th>
-                      <th className="py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                        Hip
-                      </th>
-                      <th className="py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                        Length
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sizeGuide.map((row) => (
-                      <tr
-                        key={row.size}
-                        className="border-b border-border/30"
-                      >
-                        <td className="py-3.5 font-medium">
-                          {row.size}
-                        </td>
-                        <td className="py-3.5 text-muted">
-                          {row.bust}&quot;
-                        </td>
-                        <td className="py-3.5 text-muted">
-                          {row.waist}&quot;
-                        </td>
-                        <td className="py-3.5 text-muted">
-                          {row.hip}&quot;
-                        </td>
-                        <td className="py-3.5 text-muted">
-                          {row.length}&quot;
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeTab === "reviews" && (
-              <ReviewSection
-                reviews={reviews}
-                productId={product.id}
-              />
-            )}
-          </div>
+        {/* B4: Details accordion — clearly separated sections, each answering a
+            routine question, instead of one long copied text block. */}
+        <div id="product-details" className="mt-16 md:mt-20 scroll-mt-24 max-w-3xl">
+          <Accordion items={accordionItems} defaultOpenId="description" />
         </div>
       </div>
 
