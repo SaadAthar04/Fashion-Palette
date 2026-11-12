@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { X, Plus, Upload, ChevronLeft, ChevronRight } from "lucide-react";
@@ -100,6 +100,10 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Any image still without alt text falls back to the product name (applied on
+  // save too), so the gate and the payload always agree.
+  const effectiveImages = images.map((img) => ({ ...img, altText: img.altText?.trim() || form.name.trim() }));
+
   // A2: live completeness indicator + publish gate mirroring the server rule.
   const completeness = getCompletenessItems({
     brandId: Number(form.brandId) || null,
@@ -111,29 +115,45 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
     pieceCount: form.pieceCount,
     careInstructions: form.careInstructions,
     details,
-    images,
+    images: effectiveImages,
   });
   const missingRequired = completeness.filter((i) => i.tier === "required" && !i.ok);
   const blockPublish = form.publishStatus === "published" && missingRequired.length > 0;
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  const completenessRef = useRef<HTMLDivElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-    for (const file of Array.from(files)) {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    let uploaded = 0;
+    for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
       try {
         const res = await fetch("/api/upload", { method: "POST", body: formData });
-        const data = await res.json();
-        if (data.url) {
-          setImages((prev) => [...prev, { imageUrl: data.url, altText: "", isPrimary: prev.length === 0 }]);
+        // A proxy error (e.g. 413 from nginx) may not be JSON — don't crash on it.
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.url) {
+          const reason = data.error
+            || (res.status === 413 ? `${file.name} is too large.` : res.status === 401 || res.status === 403 ? "Your session expired — please log in again." : `Failed to upload ${file.name}.`);
+          toast.error(reason);
+          continue;
         }
+        // Default the alt text to the product name so the publish gate's
+        // "alt text on every image" rule is met; it stays editable.
+        setImages((prev) => [...prev, { imageUrl: data.url, altText: form.name.trim(), isPrimary: prev.length === 0 }]);
+        uploaded++;
       } catch {
-        toast.error(`Failed to upload ${file.name}`);
+        toast.error(`Failed to upload ${file.name} — check your connection and try again.`);
       }
     }
-    e.target.value = "";
+    setIsUploading(false);
+    if (uploaded > 0) toast.success(`${uploaded} image${uploaded > 1 ? "s" : ""} uploaded`);
+    input.value = "";
   };
 
   const removeImage = (index: number) => {
@@ -180,7 +200,8 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (blockPublish) {
-      toast.error(`Complete required fields before publishing: ${missingRequired.map((m) => m.label).join(", ")}.`);
+      toast.error(`Can't publish yet — please complete: ${missingRequired.map((m) => m.label).join(", ")}. Or set status to Draft to save your progress.`, { duration: 8000 });
+      completenessRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setIsSubmitting(true);
@@ -199,7 +220,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
         pieceCount: form.pieceCount || null,
         // B3: structured details; drop empty sections so we store null when unused.
         details: (details.included.length || details.components.length || details.care.length || details.disclaimers.length) ? details : null,
-        images,
+        images: effectiveImages,
         variants,
       };
 
@@ -334,8 +355,9 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
               ))}
               <label className="border-2 border-dashed border-border rounded-lg aspect-[3/4] flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
                 <Upload className="w-6 h-6 text-muted mb-1" />
-                <span className="text-xs text-muted">Upload</span>
-                <input type="file" accept="image/*" multiple onChange={handleUpload} className="hidden" />
+                <span className="text-xs text-muted">{isUploading ? "Uploading…" : "Upload"}</span>
+                <span className="text-[10px] text-muted/70 mt-0.5">JPG, PNG or WebP</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple onChange={handleUpload} disabled={isUploading} className="hidden" />
               </label>
             </div>
           </div>
@@ -450,7 +472,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
           </div>
 
           {/* A2: Completeness indicator + publish gate */}
-          <div className="bg-white rounded-lg shadow-sm p-6 space-y-3">
+          <div ref={completenessRef} className="bg-white rounded-lg shadow-sm p-6 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Completeness</h3>
               {missingRequired.length === 0 ? (
@@ -496,9 +518,14 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
       </div>
 
       {/* Submit */}
+      {blockPublish && (
+        <p className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-right">
+          To publish, first complete: <strong>{missingRequired.map((m) => m.label).join(", ")}</strong>. Or set Publish Status to Draft to save.
+        </p>
+      )}
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={() => router.push("/admin/products")}>Cancel</Button>
-        <Button type="submit" isLoading={isSubmitting} disabled={blockPublish} title={blockPublish ? "Complete required fields before publishing" : undefined}>{productId ? "Update Product" : "Create Product"}</Button>
+        <Button type="submit" isLoading={isSubmitting} disabled={isUploading}>{productId ? "Update Product" : "Create Product"}</Button>
       </div>
     </form>
   );
