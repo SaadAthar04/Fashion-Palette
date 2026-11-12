@@ -47,12 +47,14 @@ export function getCompletenessItems(p: CompletenessInput): CompletenessItem[] {
     { key: "brandId", label: "Brand", ok: hasId(p.brandId), tier: "required" },
     { key: "categoryId", label: "Category", ok: hasId(p.categoryId), tier: "required" },
     { key: "articleCode", label: "Article code / SKU", ok: hasText(p.sku) || hasText(p.originalProductCode), tier: "required" },
-    { key: "fabric", label: "Fabric", ok: hasText(p.fabric), tier: "required" },
-    { key: "color", label: "Colour", ok: hasText(p.color), tier: "required" },
-    { key: "workType", label: "Work type", ok: hasText(p.workType), tier: "required" },
-    { key: "pieceCount", label: "Piece count", ok: hasText(p.pieceCount), tier: "required" },
+    // Client request (13 Nov 2026): fabric, colour, work type, piece count and
+    // alt text are recommended only, so they never block publishing.
+    { key: "fabric", label: "Fabric", ok: hasText(p.fabric), tier: "recommended" },
+    { key: "color", label: "Colour", ok: hasText(p.color), tier: "recommended" },
+    { key: "workType", label: "Work type", ok: hasText(p.workType), tier: "recommended" },
+    { key: "pieceCount", label: "Piece count", ok: hasText(p.pieceCount), tier: "recommended" },
     { key: "images", label: "At least one product image", ok: realImages.length > 0, tier: "required" },
-    { key: "altText", label: "Alt text on every image", ok: allHaveAlt, tier: "required" },
+    { key: "altText", label: "Alt text on every image", ok: allHaveAlt, tier: "recommended" },
     // Recommended (surfaced, not blocking):
     { key: "care", label: "Care instructions", ok: hasText(p.careInstructions) || nonEmptyArray(details?.care), tier: "recommended" },
     { key: "included", label: "What's included (components)", ok: nonEmptyArray(details?.included), tier: "recommended" },
