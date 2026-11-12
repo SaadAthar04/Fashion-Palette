@@ -498,6 +498,13 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
                 </li>
               ))}
             </ul>
+            {missingRequired.length === 0 && form.publishStatus !== "published" && (
+              <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2.5 py-2 leading-relaxed space-y-1.5">
+                <p>This product is ready, but its status is <strong className="capitalize">{form.publishStatus}</strong>, so it is <strong>not live</strong>.</p>
+                <button type="button" onClick={() => updateField("publishStatus", "published")} className="font-semibold text-accent underline">Set status to Published</button>
+                <span className="text-muted"> then click {productId ? "Update" : "Create"} Product.</span>
+              </div>
+            )}
             {blockPublish && (
               <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-2 leading-relaxed">
                 Publishing is blocked until every <strong>required</strong> field above is complete. Save as Draft to keep your changes.
