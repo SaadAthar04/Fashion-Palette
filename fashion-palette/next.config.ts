@@ -33,6 +33,16 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+  // Admin uploads are written to public/uploads at runtime, but `next start`
+  // only serves public/ files that existed at boot — new uploads would 404
+  // until a restart. Route them through a handler that reads from disk.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/uploads/:path*", destination: "/api/media/:path*" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
